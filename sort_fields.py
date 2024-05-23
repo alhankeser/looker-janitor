@@ -1,21 +1,31 @@
 import sys
-import re
+
+# import re
+import regex as re
 
 TYPE_ORDER = ["filter", "parameter", "dimension", "dimension_group", "measure", "set"]
-PARAM_ORDER = ["hidden", "type", "group_label", "group_item_label", "label", "description", "sql"]
-OPTIONS = {
-    "sort_fields": True,
-    "sort_field_parameters": True,
-}
-
-PARAM_PATTERNS = {
-    "no_quotes": r"(\w+)",
-    "quotes": r"((?:'|\")(?:\w|\s)+(?:'|\"))",
-    "brackets": r"(\[[^[\]]*\])",
-    "braces": r"(\{(?:[^{}]|(?R))*\})",
-    "double_semicolon": r"(.*?);;"
-}
-
+PARAM_ORDER = [
+    "hidden",
+    "type",
+    "view_label",
+    "group_label",
+    "group_item_label",
+    "label",
+    "description",
+    "sql",
+    "filters",
+]
+REQUIRED_PARAMS = {
+    "measure": ["type", "label", "description", "drill_fields"]
+    }
+OPTIONS = {"sort_fields": True, "sort_field_parameters": True}
+PATTERNS = [
+    {"name": "braces", "pattern": r"(\{(?:[^{}]|(?R))*\})"},
+    {"name": "brackets", "pattern": r"(\[[^[\]]*\])"},
+    {"name": "quotes", "pattern": r"((?:'|\")(?:\w|\s)+(?:'|\"))"},
+    {"name": "no_quotes", "pattern": r"(\w+)"},
+    {"name": "double_semicolon", "pattern": r"(.*?);;"},
+]
 PARAM_PATTERN_LOOKUP = {
     "action": "braces",
     "alias": "brackets",
@@ -37,6 +47,7 @@ PARAM_PATTERN_LOOKUP = {
     "drill_fields": "brackets",
     "end_location_field": "no_quotes",
     "fanout_on": "no_quotes",
+    "fields": "brackets",
     "filters": "brackets",
     "full_suggestions": "no_quotes",
     "group_item_label": "quotes",
@@ -77,8 +88,9 @@ PARAM_PATTERN_LOOKUP = {
     "units": "no_quotes",
     "value_format": "quotes",
     "value_format_name": "no_quotes",
-    "view_label": "quotes"
+    "view_label": "quotes",
 }
+
 
 def filter_fields_by_type(field_type, fields):
     filtered_list = [item for item in fields if item["field_type"] == field_type]
@@ -96,7 +108,9 @@ def filter_fields_by_type(field_type, fields):
 
 
 def get_fields(file_content):
-    field_regex = r"((filter|parameter|dimension|measure|set)\s*:\s*(\w+)\s*{)"
+    field_regex = (
+        r"((filter|parameter|dimension|dimension_group|measure|set)\s*:\s*(\w+)\s*{)"
+    )
     matching_fields = re.findall(field_regex, file_content, re.DOTALL)
     fields = []
     remaining_content = file_content
@@ -130,13 +144,54 @@ def get_fields(file_content):
 def get_parent_end_index(file_content):
     return file_content.rfind("}")
 
+
+def filter_patterns_by_name(pattern_name):
+    return [x for x in PATTERNS if x["name"] == pattern_name][0]
+
+
+def filter_fields_by_pattern(pattern_name):
+    return [k for k, v in PARAM_PATTERN_LOOKUP.items() if v == pattern_name]
+
+
+def filter_params_by_type(filter_params, param_type):
+    return [x for x in filter_params if x["param_type"] == param_type]
+
+
+def get_pattern_field_lookup():
+    lookup = {}
+    for pattern in PATTERNS:
+        lookup[pattern["name"]] = filter_fields_by_pattern(pattern["name"])
+    return lookup
+
+def get_sorted_params():
+    remaining_params = [k for k in PARAM_PATTERN_LOOKUP.keys() if k not in PARAM_ORDER]
+    return PARAM_ORDER + remaining_params
+
 def get_field_params(fields):
-    print(fields[:3])
-#     attr_pattern = r"(?:" + "|".join(PARAM_ORDER) + ")\s*:"
-#     print(attr_pattern)
-#     for field in fields:
-#         print(re.findall(attr_pattern,field["field_content"]))
-                
+    pattern_field_lookup = get_pattern_field_lookup()
+    for field in fields:
+        field["params"] = []
+        pattern = filter_patterns_by_name("braces")
+        match = re.search(pattern["pattern"], field["field_content"])
+        start_index, end_index = match.span()
+        field_content = field["field_content"][start_index + 1 : end_index - 1].strip()
+        if len(field_content) == 0:
+            continue
+        for pattern in PATTERNS:
+            params = pattern_field_lookup[pattern["name"]]
+            for param_type in params:
+                param_search_pattern = param_type + "\\s*:\\s*" + pattern["pattern"]
+                for match in re.finditer(rf"{param_search_pattern}", field_content):
+                    field["params"].append(
+                        {
+                            "param_type": param_type,
+                            "param_content": match.group(),
+                        }
+                    )
+                    field_content = field_content.replace(match.group(), "")
+        field["field_remaining_content"] = field_content.strip()
+    return fields
+
 
 def main():
     if len(sys.argv) != 2:
@@ -147,14 +202,30 @@ def main():
     with open(file_path, "r") as file:
         file_content = file.read()
         fields, remaining_content = get_fields(file_content)
-        get_field_params(fields)
+        fields = get_field_params(fields)
         closing_tag_index = remaining_content.rfind("}")
         file.close()
 
     fields_content = ""
     for field_type in TYPE_ORDER:
         for field in filter_fields_by_type(field_type, fields):
-            fields_content += "\n  " + field["field_content"] + "\n"
+            fields_content += (
+                    "\n  "
+                    + field["field_type"]
+                    + ": "
+                    + field["field_name"]
+                    + " {\n"
+                    )
+            for param_type in get_sorted_params():
+                for param_in_field in filter_params_by_type(
+                    field["params"], param_type
+                ):
+                    fields_content += (
+                        "    "
+                        + param_in_field["param_content"]
+                        + "\n"
+                    )
+            fields_content += "  }\n" 
     with open("output.view.lkml", "w") as file:
         file.write(
             remaining_content[:closing_tag_index]
