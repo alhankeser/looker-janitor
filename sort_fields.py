@@ -5,6 +5,7 @@ import regex as re
 
 TYPE_ORDER = ["filter", "parameter", "dimension", "dimension_group", "measure", "set"]
 PARAM_ORDER = [
+    "sql",
     "hidden",
     "type",
     "view_label",
@@ -12,7 +13,6 @@ PARAM_ORDER = [
     "group_item_label",
     "label",
     "description",
-    "sql",
     "filters",
 ]
 REQUIRED_PARAMS = {
@@ -20,9 +20,9 @@ REQUIRED_PARAMS = {
     }
 OPTIONS = {"sort_fields": True, "sort_field_parameters": True}
 PATTERNS = [
-    {"name": "braces", "pattern": r"(\{(?:[^{}]|(?R))*\})"},
+    {"name": "braces", "pattern": r"(\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\})"},
     {"name": "brackets", "pattern": r"(\[[^[\]]*\])"},
-    {"name": "quotes", "pattern": r"((?:'|\")(?:\w|\s)+(?:'|\"))"},
+    {"name": "quotes", "pattern": r"((?:'|\")(?:\W|\w)[^\"]+(?:'|\"))"},
     {"name": "no_quotes", "pattern": r"(\w+)"},
     {"name": "double_semicolon", "pattern": r"(.*?);;"},
 ]
@@ -130,14 +130,14 @@ def get_fields(file_content):
         else:
             parent_end_index = get_parent_end_index(file_content)
             fields[i]["end_index"] = file_content[:parent_end_index].rfind("}") + 1
-        fields[i]["field_content"] = file_content[
+        fields[i]["fields_content"] = file_content[
             fields[i]["start_index"] : fields[i]["end_index"]
         ]
         fields[i]["is_primary_key"] = (
-            fields[i]["field_content"].find("primary_key: yes") > -1
+            fields[i]["fields_content"].find("primary_key: yes") > -1
         )
     for field in fields:
-        remaining_content = remaining_content.replace(field["field_content"], "")
+        remaining_content = remaining_content.replace(field["fields_content"], "")
     return fields, re.sub(r"\n\s*\n", "\n", remaining_content)
 
 
@@ -156,6 +156,8 @@ def filter_fields_by_pattern(pattern_name):
 def filter_params_by_type(filter_params, param_type):
     return [x for x in filter_params if x["param_type"] == param_type]
 
+def sort_params_by_len(params):
+    return [x for x in sorted(params, key=len, reverse=True)]
 
 def get_pattern_field_lookup():
     lookup = {}
@@ -171,27 +173,54 @@ def get_field_params(fields):
     pattern_field_lookup = get_pattern_field_lookup()
     for field in fields:
         field["params"] = []
-        pattern = filter_patterns_by_name("braces")
-        match = re.search(pattern["pattern"], field["field_content"])
-        start_index, end_index = match.span()
-        field_content = field["field_content"][start_index + 1 : end_index - 1].strip()
-        if len(field_content) == 0:
+        start_index = field["fields_content"].find("{")
+        end_index = field["fields_content"].rfind("}")
+        fields_content = field["fields_content"][start_index + 1 : end_index - 1]
+        if len(fields_content) == 0:
             continue
         for pattern in PATTERNS:
             params = pattern_field_lookup[pattern["name"]]
-            for param_type in params:
+            for param_type in sort_params_by_len(params):
                 param_search_pattern = param_type + "\\s*:\\s*" + pattern["pattern"]
-                for match in re.finditer(rf"{param_search_pattern}", field_content):
+                match = re.search(rf"{param_search_pattern}", fields_content)
+                while match:
                     field["params"].append(
                         {
                             "param_type": param_type,
                             "param_content": match.group(),
                         }
                     )
-                    field_content = field_content.replace(match.group(), "")
-        field["field_remaining_content"] = field_content.strip()
+                    fields_content = fields_content.replace(match.group(), "")
+                    match = re.search(rf"{param_search_pattern}", fields_content)
+        field["field_remaining_content"] = fields_content.strip()
     return fields
 
+def get_fields_content(fields):
+    fields_content = ""
+    for field_type in TYPE_ORDER:
+        for field in filter_fields_by_type(field_type, fields):
+            fields_content += (
+                    "\n  "
+                    + field["field_type"]
+                    + ": "
+                    + field["field_name"]
+                    + " {"
+                    )
+            for param_type in get_sorted_params():
+                for param_in_field in filter_params_by_type(
+                    field["params"], param_type
+                ):
+                    fields_content += (
+                        "\n    "
+                        + param_in_field["param_content"]
+                    )
+            if len(field["field_remaining_content"].strip()) > 0:
+                fields_content += (                
+                    "\n    "
+                    + field["field_remaining_content"]
+                    )
+            fields_content += "\n  }\n"
+    return fields_content
 
 def main():
     if len(sys.argv) != 2:
@@ -206,26 +235,8 @@ def main():
         closing_tag_index = remaining_content.rfind("}")
         file.close()
 
-    fields_content = ""
-    for field_type in TYPE_ORDER:
-        for field in filter_fields_by_type(field_type, fields):
-            fields_content += (
-                    "\n  "
-                    + field["field_type"]
-                    + ": "
-                    + field["field_name"]
-                    + " {\n"
-                    )
-            for param_type in get_sorted_params():
-                for param_in_field in filter_params_by_type(
-                    field["params"], param_type
-                ):
-                    fields_content += (
-                        "    "
-                        + param_in_field["param_content"]
-                        + "\n"
-                    )
-            fields_content += "  }\n" 
+    fields_content = get_fields_content(fields)
+
     with open("output.view.lkml", "w") as file:
         file.write(
             remaining_content[:closing_tag_index]
@@ -233,14 +244,6 @@ def main():
             + remaining_content[closing_tag_index:]
         )
     return True
-
-    # try:
-    #     #
-    # except FileNotFoundError:
-    #     print("File not found.")
-    # except Exception as e:
-    #     print(e)
-
 
 if __name__ == "__main__":
     main()
