@@ -1,11 +1,8 @@
 import sys
-
-# import re
 import regex as re
 
 TYPE_ORDER = ["filter", "parameter", "dimension", "dimension_group", "measure", "set"]
 PARAM_ORDER = [
-    "sql",
     "hidden",
     "type",
     "view_label",
@@ -13,12 +10,22 @@ PARAM_ORDER = [
     "group_item_label",
     "label",
     "description",
+    "sql",
+    "sql_start",
+    "sql_end",
+    "value_format_name",
     "filters",
+    "drill_fields",
 ]
 REQUIRED_PARAMS = {
-    "measure": ["type", "label", "description", "drill_fields"]
-    }
-OPTIONS = {"sort_fields": True, "sort_field_parameters": True}
+    "filter": [],
+    "parameter": [],
+    "dimension": ["label"],
+    "dimension_group": ["label"],
+    "measure": ["label", "drill_fields"],
+    "set": [],
+}
+OPTIONS = {"sort_fields": True, "sort_field_parameters": True, "check_required_params": True}
 PATTERNS = [
     {"name": "braces", "pattern": r"(\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\})"},
     {"name": "brackets", "pattern": r"(\[[^[\]]*\])"},
@@ -156,8 +163,10 @@ def filter_fields_by_pattern(pattern_name):
 def filter_params_by_type(filter_params, param_type):
     return [x for x in filter_params if x["param_type"] == param_type]
 
+
 def sort_params_by_len(params):
     return [x for x in sorted(params, key=len, reverse=True)]
+
 
 def get_pattern_field_lookup():
     lookup = {}
@@ -165,9 +174,11 @@ def get_pattern_field_lookup():
         lookup[pattern["name"]] = filter_fields_by_pattern(pattern["name"])
     return lookup
 
+
 def get_sorted_params():
     remaining_params = [k for k in PARAM_PATTERN_LOOKUP.keys() if k not in PARAM_ORDER]
     return PARAM_ORDER + remaining_params
+
 
 def get_field_params(fields):
     pattern_field_lookup = get_pattern_field_lookup()
@@ -195,39 +206,51 @@ def get_field_params(fields):
         field["field_remaining_content"] = fields_content.strip()
     return fields
 
-def get_fields_content(fields):
+
+def get_fields_content(fields, line_number_offset=0):
     fields_content = ""
+    warnings = []
     for field_type in TYPE_ORDER:
         for field in filter_fields_by_type(field_type, fields):
+            required_params = REQUIRED_PARAMS[field_type]
+            field_name = field["field_name"]
             fields_content += (
-                    "\n  "
-                    + field["field_type"]
-                    + ": "
-                    + field["field_name"]
-                    + " {"
-                    )
+                "\n  " + field_type + ": " + field_name + " {"
+            )
             for param_type in get_sorted_params():
                 for param_in_field in filter_params_by_type(
                     field["params"], param_type
                 ):
-                    fields_content += (
-                        "\n    "
-                        + param_in_field["param_content"]
-                    )
+                    fields_content += "\n    " + param_in_field["param_content"]
+                    param_type = param_in_field["param_type"]
+                    if param_type in required_params:
+                        required_params.remove(param_type)
             if len(field["field_remaining_content"].strip()) > 0:
-                fields_content += (                
-                    "\n    "
-                    + field["field_remaining_content"]
-                    )
+                fields_content += "\n    " + field["field_remaining_content"]
             fields_content += "\n  }\n"
-    return fields_content
+            if len(required_params) > 0:
+                line_number = fields_content.count("\n")
+                warnings.append({
+                    "line_number": line_number + line_number_offset,
+                    "field_type": field_type,
+                    "field_name": field_name,
+                    "missing_parameters": ",".join(required_params)
+                })
+    return fields_content, warnings
+
 
 def main():
-    if len(sys.argv) != 2:
-        print(f"Usage: python sort_fields.py <file_path>")
+    if len(sys.argv) < 2:
+        print(f"Usage: python main.py <file_path>")
         return
 
+    
     file_path = sys.argv[1]
+    output_file_path = file_path
+    
+    if len(sys.argv) > 2:
+        output_file_path = sys.argv[2]
+    
     with open(file_path, "r") as file:
         file_content = file.read()
         fields, remaining_content = get_fields(file_content)
@@ -235,15 +258,17 @@ def main():
         closing_tag_index = remaining_content.rfind("}")
         file.close()
 
-    fields_content = get_fields_content(fields)
+    line_number_offset = remaining_content[:closing_tag_index].count("\n")
+    fields_content, warnings = get_fields_content(fields, line_number_offset)
 
-    with open("output.view.lkml", "w") as file:
+    with open(output_file_path, "w") as file:
         file.write(
             remaining_content[:closing_tag_index]
             + fields_content
             + remaining_content[closing_tag_index:]
         )
-    return True
+    return warnings
+
 
 if __name__ == "__main__":
     main()
