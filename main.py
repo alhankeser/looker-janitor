@@ -14,6 +14,7 @@ PARAM_ORDER = [
     "sql_start",
     "sql_end",
     "value_format_name",
+    "value_format",
     "filters",
     "drill_fields",
 ]
@@ -25,7 +26,12 @@ REQUIRED_PARAMS = {
     "measure": ["label", "drill_fields"],
     "set": [],
 }
-OPTIONS = {"sort_fields": True, "sort_field_parameters": True, "check_required_params": True}
+OPTIONS = {
+    "sort_fields": True,
+    "sort_field_parameters": True,
+    "check_required_params": True,
+    "primary_key_first": True
+}
 PATTERNS = [
     {"name": "braces", "pattern": r"(\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\})"},
     {"name": "brackets", "pattern": r"(\[[^[\]]*\])"},
@@ -214,9 +220,7 @@ def get_fields_content(fields, line_number_offset=0):
         for field in filter_fields_by_type(field_type, fields):
             required_params = REQUIRED_PARAMS[field_type]
             field_name = field["field_name"]
-            fields_content += (
-                "\n  " + field_type + ": " + field_name + " {"
-            )
+            fields_content += "\n  " + field_type + ": " + field_name + " {"
             for param_type in get_sorted_params():
                 for param_in_field in filter_params_by_type(
                     field["params"], param_type
@@ -230,12 +234,14 @@ def get_fields_content(fields, line_number_offset=0):
             fields_content += "\n  }\n"
             if len(required_params) > 0:
                 line_number = fields_content.count("\n")
-                warnings.append({
-                    "line_number": line_number + line_number_offset,
-                    "field_type": field_type,
-                    "field_name": field_name,
-                    "missing_parameters": ",".join(required_params)
-                })
+                warnings.append(
+                    {
+                        "line_number": line_number + line_number_offset,
+                        "field_type": field_type,
+                        "field_name": field_name,
+                        "missing_parameters": ",".join(required_params),
+                    }
+                )
     return fields_content, warnings
 
 
@@ -244,13 +250,12 @@ def main():
         print(f"Usage: python main.py <file_path>")
         return
 
-    
     file_path = sys.argv[1]
     output_file_path = file_path
-    
+
     if len(sys.argv) > 2:
         output_file_path = sys.argv[2]
-    
+
     with open(file_path, "r") as file:
         file_content = file.read()
         fields, remaining_content = get_fields(file_content)
