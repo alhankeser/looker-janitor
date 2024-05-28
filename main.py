@@ -237,7 +237,6 @@ def get_fields_content(fields, line_number_offset=0):
                 warnings.append(
                     {
                         "line_number": line_number + line_number_offset,
-                        "column_number": 0,
                         "message": f"{field_type} '{field_name}' missing " + ",".join(required_params)
                     }
                 )
@@ -246,10 +245,9 @@ def get_fields_content(fields, line_number_offset=0):
 def format_warnings(warnings, file_path):
     formatted = ""
     for warning in warnings:
-        formatted += "{file_path}:{line_number}:{column_number}:{message}\n".format(
+        formatted += "{file_path}:{line_number}: {message}\n".format(
             file_path=file_path,
             line_number=warning["line_number"],
-            column_number=warning["column_number"],
             message=warning["message"]
         )
     return formatted
