@@ -237,13 +237,22 @@ def get_fields_content(fields, line_number_offset=0):
                 warnings.append(
                     {
                         "line_number": line_number + line_number_offset,
-                        "field_type": field_type,
-                        "field_name": field_name,
-                        "missing_parameters": ",".join(required_params),
+                        "column_number": 0,
+                        "message": f"{field_type} '{field_name}' missing " + ",".join(required_params)
                     }
                 )
     return fields_content, warnings
 
+def format_warnings(warnings, file_path):
+    formatted = ""
+    for warning in warnings:
+        formatted += "{file_path}:{line_number}:{column_number}:{message}\n".format(
+            file_path=file_path,
+            line_number=warning["line_number"],
+            column_number=warning["column_number"],
+            message=warning["message"]
+        )
+    return formatted
 
 def main():
     if len(sys.argv) < 2:
@@ -272,7 +281,7 @@ def main():
             + fields_content
             + remaining_content[closing_tag_index:]
         )
-    return warnings
+    print(format_warnings(warnings, file_path))
 
 
 if __name__ == "__main__":
