@@ -5,3 +5,7 @@ author: alhankeser
 runs:
   using: 'ubuntu-latest'
   main: 'main.py'
+
+branding:
+  icon: bar-chart
+  color: blue
