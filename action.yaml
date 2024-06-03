@@ -1,0 +1,7 @@
+name: looker-janitor
+description: Clean and organize Looker lookml view.lkml files.
+author: alhankeser
+
+runs:
+  using: 'ubuntu-latest'
+  main: 'main.py'
