@@ -253,33 +253,31 @@ def format_warnings(warnings, file_path):
     return formatted
 
 def main():
-    if len(sys.argv) < 2:
-        print(f"Usage: python main.py <file_path>")
-        return
+    
+    # files = sys.argv[1]
+    sys.stdout(sys.argv)
+    # output_file_path = file_path
 
-    file_path = sys.argv[1]
-    output_file_path = file_path
+    # if len(sys.argv) > 2:
+    #     output_file_path = sys.argv[2]
 
-    if len(sys.argv) > 2:
-        output_file_path = sys.argv[2]
+    # with open(file_path, "r") as file:
+    #     file_content = file.read()
+    #     fields, remaining_content = get_fields(file_content)
+    #     fields = get_field_params(fields)
+    #     closing_tag_index = remaining_content.rfind("}")
+    #     file.close()
 
-    with open(file_path, "r") as file:
-        file_content = file.read()
-        fields, remaining_content = get_fields(file_content)
-        fields = get_field_params(fields)
-        closing_tag_index = remaining_content.rfind("}")
-        file.close()
+    # line_number_offset = remaining_content[:closing_tag_index].count("\n")
+    # fields_content, warnings = get_fields_content(fields, line_number_offset)
 
-    line_number_offset = remaining_content[:closing_tag_index].count("\n")
-    fields_content, warnings = get_fields_content(fields, line_number_offset)
-
-    with open(output_file_path, "w") as file:
-        file.write(
-            remaining_content[:closing_tag_index]
-            + fields_content
-            + remaining_content[closing_tag_index:]
-        )
-    print(format_warnings(warnings, file_path))
+    # with open(output_file_path, "w") as file:
+    #     file.write(
+    #         remaining_content[:closing_tag_index]
+    #         + fields_content
+    #         + remaining_content[closing_tag_index:]
+    #     )
+    # print(format_warnings(warnings, file_path))
 
 
 if __name__ == "__main__":
