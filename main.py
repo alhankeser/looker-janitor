@@ -1,3 +1,4 @@
+import os
 import sys
 import regex as re
 
@@ -213,9 +214,8 @@ def get_field_params(fields):
     return fields
 
 
-def get_fields_content(fields, line_number_offset=0):
+def get_fields_content(fields, line_number_offset=0, warnings=[]):
     fields_content = ""
-    warnings = []
     for field_type in TYPE_ORDER:
         for field in filter_fields_by_type(field_type, fields):
             required_params = REQUIRED_PARAMS[field_type]
@@ -254,30 +254,28 @@ def format_warnings(warnings, file_path):
 
 def main():
     
-    # files = sys.argv[1]
-    sys.stdout(sys.argv)
-    # output_file_path = file_path
+    files = os.getenv('INPUT_FILES')
+    warnings = []
+    for file_path in files:
 
-    # if len(sys.argv) > 2:
-    #     output_file_path = sys.argv[2]
+        with open(file_path, "r") as file:
+            file_content = file.read()
+            fields, remaining_content = get_fields(file_content)
+            fields = get_field_params(fields)
+            closing_tag_index = remaining_content.rfind("}")
+            file.close()
 
-    # with open(file_path, "r") as file:
-    #     file_content = file.read()
-    #     fields, remaining_content = get_fields(file_content)
-    #     fields = get_field_params(fields)
-    #     closing_tag_index = remaining_content.rfind("}")
-    #     file.close()
+        line_number_offset = remaining_content[:closing_tag_index].count("\n")
+        fields_content, warnings = get_fields_content(fields, line_number_offset, warnings)
 
-    # line_number_offset = remaining_content[:closing_tag_index].count("\n")
-    # fields_content, warnings = get_fields_content(fields, line_number_offset)
-
-    # with open(output_file_path, "w") as file:
-    #     file.write(
-    #         remaining_content[:closing_tag_index]
-    #         + fields_content
-    #         + remaining_content[closing_tag_index:]
-    #     )
-    # print(format_warnings(warnings, file_path))
+        with open(file_path, "w") as file:
+            file.write(
+                remaining_content[:closing_tag_index]
+                + fields_content
+                + remaining_content[closing_tag_index:]
+            )
+    
+    return format_warnings(warnings, file_path)
 
 
 if __name__ == "__main__":

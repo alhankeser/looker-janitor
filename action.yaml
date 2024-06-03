@@ -2,6 +2,15 @@ name: 'Looker Janitor'
 description: Clean and organize Looker lookml view.lkml files.
 author: 'Alhan Keser'
 
+inputs:
+  input:
+    description: 'List of files to clean.'
+    required: true
+
+outputs:
+  warnings:
+    description: 'List of warnings.'
+
 runs:
   using: 'ubuntu-latest'
   main: 'main.py'
