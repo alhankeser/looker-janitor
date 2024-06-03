@@ -1,11 +1,11 @@
-name: looker-janitor
+name: 'Looker Janitor'
 description: Clean and organize Looker lookml view.lkml files.
-author: alhankeser
+author: 'Alhan Keser'
 
 runs:
   using: 'ubuntu-latest'
   main: 'main.py'
 
 branding:
-  icon: bar-chart
-  color: blue
+  icon: check-square
+  color: green
