@@ -253,7 +253,7 @@ def format_warnings(warnings, file_path):
 
 def main():
     
-    files = sys.argv[1]
+    files = sys.argv[1:]
     warnings = []
     for file_path in files:
 
