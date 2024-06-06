@@ -3,16 +3,50 @@ description: Clean and organize Looker lookml view.lkml files.
 author: 'Alhan Keser'
 
 inputs:
-  input:
-    description: 'List of files to clean.'
-    required: true
+  test:
+    required: false
 
 outputs:
   warnings:
     description: 'List of warnings.'
 
 runs:
-  main: 'main.py'
+  using: 'composite'
+  steps:
+    permissions:
+        contents: write
+    # runs-on: ubuntu-latest
+    steps:
+        - name: Checkout Branch
+          uses: actions/checkout@v2
+          with:
+            ref: ${{ github.event.pull_request.head.ref }}
+        - name: Install Python
+          uses: actions/setup-python@v2
+          with:
+            python-version: 3.12
+        - name: Install Dependencies
+          run: |
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+        - name: Get Changed Files
+          id: changed_files
+          uses: tj-actions/changed-files@v44
+          with:
+            files: |
+                **.view.lkml
+                **.view.lookml
+        - name: Run Looker Janitor
+          run: |
+            python main.py ${{ steps.changed_files.outputs.all_changed_files }}
+        - name: Commit Cleaned Files
+          id: commit_changes
+          run: |
+            for updated_file in ${{ steps.changed_files.outputs.all_changed_files }}; do
+                git add "${updated_file}"
+            done
+            git commit -m "Run Looker Janitor" || continue
+            git push
 
 branding:
   icon: check-square
