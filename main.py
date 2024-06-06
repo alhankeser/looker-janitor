@@ -1,4 +1,3 @@
-import os
 import sys
 import regex as re
 
@@ -254,7 +253,7 @@ def format_warnings(warnings, file_path):
 
 def main():
     
-    files = os.getenv('INPUT_FILES')
+    files = sys.argv[1]
     warnings = []
     for file_path in files:
 
