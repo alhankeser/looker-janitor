@@ -12,7 +12,6 @@ outputs:
     description: 'List of warnings.'
 
 runs:
-  using: 'ubuntu-latest'
   main: 'main.py'
 
 branding:
