@@ -17,6 +17,12 @@ runs:
       uses: actions/checkout@v2
       with:
         ref: ${{ github.event.pull_request.head.ref }}
+    - name: Checkout Looker Janitor
+      uses: actions/checkout@v2
+      with:
+        repository: alhankeser/looker-janitor
+        path: looker-janitor
+        ref: refs/tags/v0.1.8-alpha
     - name: Install Python
       uses: actions/setup-python@v2
       with:
@@ -35,7 +41,7 @@ runs:
             **.view.lookml
     - name: Run Looker Janitor
       run: |
-        python main.py ${{ steps.changed_files.outputs.all_changed_files }}
+        python looker-janitor/main.py ${{ steps.changed_files.outputs.all_changed_files }}
       shell: bash
     - name: Commit Cleaned Files
       id: commit_changes
