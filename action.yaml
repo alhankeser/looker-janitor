@@ -27,7 +27,7 @@ runs:
       with:
         repository: alhankeser/looker-janitor
         path: looker-janitor
-        ref: refs/tags/v0.1.8-alpha
+        ref: refs/tags/v0.1.9-alpha
     - name: Install Python
       uses: actions/setup-python@v2
       with:
