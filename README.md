@@ -1,8 +1,6 @@
 ## Looker Janitor
 Consistently clean-up your LookML.
 
-![Screenshot 2024-05-27 at 22 37 38](https://github.com/alhankeser/looker-janitor/assets/15135669/370729c7-1777-4b18-9045-c7cfe2818975)
-
 ## Getting Started
 
 ```shell
