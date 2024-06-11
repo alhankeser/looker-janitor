@@ -1,8 +1,9 @@
 import sys
 import regex as re
+import argparse
 
-TYPE_ORDER = ["filter", "parameter", "dimension", "dimension_group", "measure", "set"]
-PARAM_ORDER = [
+DEFAULT_TYPE_ORDER = ["filter", "parameter", "dimension", "dimension_group", "measure", "set"]
+DEFAULT_PARAM_ORDER = [
     "hidden",
     "type",
     "view_label",
@@ -182,8 +183,8 @@ def get_pattern_field_lookup():
 
 
 def get_sorted_params():
-    remaining_params = [k for k in PARAM_PATTERN_LOOKUP.keys() if k not in PARAM_ORDER]
-    return PARAM_ORDER + remaining_params
+    remaining_params = [k for k in PARAM_PATTERN_LOOKUP.keys() if k not in ARGS.param_order]
+    return ARGS.param_order + remaining_params
 
 
 def get_field_params(fields):
@@ -215,7 +216,7 @@ def get_field_params(fields):
 
 def get_fields_content(fields, line_number_offset=0, warnings=[]):
     fields_content = ""
-    for field_type in TYPE_ORDER:
+    for field_type in ARGS.type_order:
         for field in filter_fields_by_type(field_type, fields):
             required_params = REQUIRED_PARAMS[field_type]
             field_name = field["field_name"]
@@ -251,11 +252,136 @@ def format_warnings(warnings, file_path):
         )
     return formatted
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--files",
+        nargs="+",
+        type=str,
+        help="List of files to clean.",
+        required=False,
+        default=[]
+    )
+
+    parser.add_argument(
+        "--type_order",
+        nargs="+",
+        type=str,
+        help="Order of field types.",
+        required=False,
+        default=DEFAULT_TYPE_ORDER
+    )
+
+    parser.add_argument(
+        "--param_order",
+        nargs="+",
+        type=str,
+        help="Order of field parameters.",
+        required=False,
+        default=DEFAULT_PARAM_ORDER
+    )
+
+    parser.add_argument(
+        "--primary_key_first",
+        type=bool,
+        help="Should primary key be ordered first.",
+        required=False,
+        default=True
+    )
+
+    parser.add_argument(
+        "--order_by_label",
+        type=bool,
+        help="Should fields be ordered by their labels.",
+        required=False,
+        default=True
+    )
+
+    parser.add_argument(
+        "--order_fields",
+        type=bool,
+        help="Should fields be ordered.",
+        required=False,
+        default=True
+    )
+
+    parser.add_argument(
+        "--order_field_parameters",
+        type=bool,
+        help="Should field parameters be ordered.",
+        required=False,
+        default=True
+    )
+
+    parser.add_argument(
+        "--check_required_params",
+        type=bool,
+        help="Should required paramaters be checked.",
+        required=False,
+        default=True
+    )
+
+    parser.add_argument(
+        "--required_filter",
+        nargs="+",
+        type=str,
+        help="List of required filter paramaters.",
+        required=False,
+        default=[]
+    )
+
+    parser.add_argument(
+        "--required_parameter",
+        nargs="+",
+        type=str,
+        help="List of required parameter paramaters.",
+        required=False,
+        default=[]
+    )
+
+    parser.add_argument(
+        "--required_dimension",
+        nargs="+",
+        type=str,
+        help="List of required dimension paramaters.",
+        required=False,
+        default=[]
+    )
+
+    parser.add_argument(
+        "--required_dimension_group",
+        nargs="+",
+        type=str,
+        help="List of required dimension_group paramaters.",
+        required=False,
+        default=[]
+    )
+
+    parser.add_argument(
+        "--required_measure",
+        nargs="+",
+        type=str,
+        help="List of required measure paramaters.",
+        required=False,
+        default=[]
+    )
+
+    parser.add_argument(
+        "--required_set",
+        nargs="+",
+        type=str,
+        help="List of required set paramaters.",
+        required=False,
+        default=[]
+    )
+
+    return parser.parse_args()
+
 def main():
     
-    files = sys.argv[1:]
     warnings = []
-    for file_path in files:
+    for file_path in ARGS.files:
 
         with open(file_path, "r") as file:
             file_content = file.read()
@@ -278,4 +404,5 @@ def main():
 
 
 if __name__ == "__main__":
+    ARGS = parse_args()
     main()
