@@ -1,0 +1,4 @@
+{
+    "orders.order_id.label" : "Order ID",
+    "orders.total_amount.label" : "Amount Total"
+}

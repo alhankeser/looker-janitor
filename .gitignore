@@ -1,4 +1,3 @@
 .venv
 **.view.lkml
 !example_input.view.lkml
-!example_output_view.lkml

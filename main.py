@@ -1,8 +1,16 @@
 import sys
 import regex as re
 import argparse
+import json
 
-DEFAULT_TYPE_ORDER = ["filter", "parameter", "dimension", "dimension_group", "measure", "set"]
+DEFAULT_TYPE_ORDER = [
+    "filter",
+    "parameter",
+    "dimension",
+    "dimension_group",
+    "measure",
+    "set",
+]
 DEFAULT_PARAM_ORDER = [
     "hidden",
     "type",
@@ -31,7 +39,7 @@ OPTIONS = {
     "sort_fields": True,
     "sort_field_parameters": True,
     "check_required_params": True,
-    "primary_key_first": True
+    "primary_key_first": True,
 }
 PATTERNS = [
     {"name": "braces", "pattern": r"(\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\})"},
@@ -108,16 +116,16 @@ PARAM_PATTERN_LOOKUP = {
 
 def filter_fields_by_type(field_type, fields):
     filtered_list = [item for item in fields if item["field_type"] == field_type]
-    sorted_list = sorted(
-        filtered_list,
-        key=lambda x: (x["field_name"].lower()),
-        reverse=(False),
-    )
+    return filtered_list
+
+
+def sort_fields(fields):
+    sorted_list = sorted(fields, key=lambda x: x["sort_key"].lower())
     if ARGS.primary_key_first:
         sorted_list = sorted(
             sorted_list,
-            key=lambda x: (x["is_primary_key"]),
-            reverse=(True),
+            key=lambda x: x["is_primary_key"],
+            reverse=True,
         )
     return sorted_list
 
@@ -184,14 +192,36 @@ def get_pattern_field_lookup():
 
 
 def get_sorted_params():
-    remaining_params = [k for k in PARAM_PATTERN_LOOKUP.keys() if k not in ARGS.param_order]
+    remaining_params = [
+        k for k in PARAM_PATTERN_LOOKUP.keys() if k not in ARGS.param_order
+    ]
     return ARGS.param_order + remaining_params
+
+
+def get_localization_data():
+    localization_data = {}
+    if not ARGS.localization_file_path == "None":
+        with open(ARGS.localization_file_path) as file_text:
+            localization_data = json.load(file_text)
+    return localization_data
+
+
+def get_field_sort_key(field, localization_data):
+    sort_key = field["field_name"]
+    if ARGS.order_by_label and not field["label"] == "":
+        label = re.search(rf"[\"|\']([\w|\W]+)[\"|\']", field["label"]).group(1)
+        if label in localization_data.keys():
+            label = localization_data[label]
+        sort_key = label
+    return sort_key
 
 
 def get_field_params(fields):
     pattern_field_lookup = get_pattern_field_lookup()
+    localization_data = get_localization_data()
     for field in fields:
         field["params"] = []
+        field["label"] = ""
         start_index = field["fields_content"].find("{")
         end_index = field["fields_content"].rfind("}")
         fields_content = field["fields_content"][start_index + 1 : end_index - 1]
@@ -209,9 +239,12 @@ def get_field_params(fields):
                             "param_content": match.group(),
                         }
                     )
+                    if param_type == "label":
+                        field["label"] = match.group().strip()
                     fields_content = fields_content.replace(match.group(), "")
                     match = re.search(rf"{param_search_pattern}", fields_content)
         field["field_remaining_content"] = fields_content.strip()
+        field["sort_key"] = get_field_sort_key(field, localization_data)
     return fields
 
 
@@ -238,10 +271,12 @@ def get_fields_content(fields, line_number_offset=0, warnings=[]):
                 warnings.append(
                     {
                         "line_number": line_number + line_number_offset,
-                        "message": f"{field_type} '{field_name}' missing " + ",".join(required_params)
+                        "message": f"{field_type} '{field_name}' missing "
+                        + ",".join(required_params),
                     }
                 )
     return fields_content, warnings
+
 
 def format_warnings(warnings, file_path):
     formatted = ""
@@ -249,9 +284,10 @@ def format_warnings(warnings, file_path):
         formatted += "{file_path}:{line_number}: {message}\n".format(
             file_path=file_path,
             line_number=warning["line_number"],
-            message=warning["message"]
+            message=warning["message"],
         )
     return formatted
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -262,7 +298,7 @@ def parse_args():
         type=str,
         help="List of files to clean.",
         required=False,
-        default=[]
+        default=[],
     )
 
     parser.add_argument(
@@ -271,7 +307,7 @@ def parse_args():
         type=str,
         help="Order of field types.",
         required=False,
-        default=DEFAULT_TYPE_ORDER
+        default=DEFAULT_TYPE_ORDER,
     )
 
     parser.add_argument(
@@ -280,7 +316,7 @@ def parse_args():
         type=str,
         help="Order of field parameters.",
         required=False,
-        default=DEFAULT_PARAM_ORDER
+        default=DEFAULT_PARAM_ORDER,
     )
 
     parser.add_argument(
@@ -288,7 +324,7 @@ def parse_args():
         type=bool,
         help="Should primary key be ordered first.",
         required=False,
-        default=True
+        default=True,
     )
 
     parser.add_argument(
@@ -296,7 +332,15 @@ def parse_args():
         type=bool,
         help="Should fields be ordered by their labels.",
         required=False,
-        default=True
+        default=True,
+    )
+
+    parser.add_argument(
+        "--localization_file_path",
+        type=str,
+        help="Path to localization file, used for field sorting.",
+        required=False,
+        default="None",
     )
 
     parser.add_argument(
@@ -304,7 +348,7 @@ def parse_args():
         type=bool,
         help="Should fields be ordered.",
         required=False,
-        default=True
+        default=True,
     )
 
     parser.add_argument(
@@ -312,7 +356,7 @@ def parse_args():
         type=bool,
         help="Should field parameters be ordered.",
         required=False,
-        default=True
+        default=True,
     )
 
     parser.add_argument(
@@ -320,7 +364,7 @@ def parse_args():
         type=bool,
         help="Should required parameters be checked.",
         required=False,
-        default=False
+        default=False,
     )
 
     parser.add_argument(
@@ -329,7 +373,7 @@ def parse_args():
         type=str,
         help="List of required filter parameters.",
         required=False,
-        default=[]
+        default=[],
     )
 
     parser.add_argument(
@@ -338,7 +382,7 @@ def parse_args():
         type=str,
         help="List of required parameter parameters.",
         required=False,
-        default=[]
+        default=[],
     )
 
     parser.add_argument(
@@ -347,7 +391,7 @@ def parse_args():
         type=str,
         help="List of required dimension parameters.",
         required=False,
-        default=[]
+        default=[],
     )
 
     parser.add_argument(
@@ -356,7 +400,7 @@ def parse_args():
         type=str,
         help="List of required dimension_group parameters.",
         required=False,
-        default=[]
+        default=[],
     )
 
     parser.add_argument(
@@ -365,7 +409,7 @@ def parse_args():
         type=str,
         help="List of required measure parameters.",
         required=False,
-        default=[]
+        default=[],
     )
 
     parser.add_argument(
@@ -374,13 +418,14 @@ def parse_args():
         type=str,
         help="List of required set parameters.",
         required=False,
-        default=[]
+        default=[],
     )
 
     return parser.parse_args()
 
+
 def main():
-    
+
     warnings = []
     for file_path in ARGS.files:
 
@@ -388,11 +433,14 @@ def main():
             file_content = file.read()
             fields, remaining_content = get_fields(file_content)
             fields = get_field_params(fields)
+            fields = sort_fields(fields)
             closing_tag_index = remaining_content.rfind("}")
             file.close()
 
         line_number_offset = remaining_content[:closing_tag_index].count("\n")
-        fields_content, warnings = get_fields_content(fields, line_number_offset, warnings)
+        fields_content, warnings = get_fields_content(
+            fields, line_number_offset, warnings
+        )
 
         with open(file_path, "w") as file:
             file.write(
@@ -400,7 +448,7 @@ def main():
                 + fields_content
                 + remaining_content[closing_tag_index:]
             )
-    
+
     return format_warnings(warnings, file_path)
 
 
