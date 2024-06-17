@@ -113,11 +113,12 @@ def filter_fields_by_type(field_type, fields):
         key=lambda x: (x["field_name"].lower()),
         reverse=(False),
     )
-    sorted_list = sorted(
-        sorted_list,
-        key=lambda x: (x["is_primary_key"]),
-        reverse=(True),
-    )
+    if ARGS.primary_key_first:
+        sorted_list = sorted(
+            sorted_list,
+            key=lambda x: (x["is_primary_key"]),
+            reverse=(True),
+        )
     return sorted_list
 
 
@@ -317,16 +318,16 @@ def parse_args():
     parser.add_argument(
         "--check_required_params",
         type=bool,
-        help="Should required paramaters be checked.",
+        help="Should required parameters be checked.",
         required=False,
-        default=True
+        default=False
     )
 
     parser.add_argument(
         "--required_filter",
         nargs="+",
         type=str,
-        help="List of required filter paramaters.",
+        help="List of required filter parameters.",
         required=False,
         default=[]
     )
@@ -335,7 +336,7 @@ def parse_args():
         "--required_parameter",
         nargs="+",
         type=str,
-        help="List of required parameter paramaters.",
+        help="List of required parameter parameters.",
         required=False,
         default=[]
     )
@@ -344,7 +345,7 @@ def parse_args():
         "--required_dimension",
         nargs="+",
         type=str,
-        help="List of required dimension paramaters.",
+        help="List of required dimension parameters.",
         required=False,
         default=[]
     )
@@ -353,7 +354,7 @@ def parse_args():
         "--required_dimension_group",
         nargs="+",
         type=str,
-        help="List of required dimension_group paramaters.",
+        help="List of required dimension_group parameters.",
         required=False,
         default=[]
     )
@@ -362,7 +363,7 @@ def parse_args():
         "--required_measure",
         nargs="+",
         type=str,
-        help="List of required measure paramaters.",
+        help="List of required measure parameters.",
         required=False,
         default=[]
     )
@@ -371,7 +372,7 @@ def parse_args():
         "--required_set",
         nargs="+",
         type=str,
-        help="List of required set paramaters.",
+        help="List of required set parameters.",
         required=False,
         default=[]
     )
