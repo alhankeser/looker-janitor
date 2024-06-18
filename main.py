@@ -433,7 +433,8 @@ def main():
             file_content = file.read()
             fields, remaining_content = get_fields(file_content)
             fields = get_field_params(fields)
-            fields = sort_fields(fields)
+            if ARGS.order_fields:
+                fields = sort_fields(fields)
             closing_tag_index = remaining_content.rfind("}")
             file.close()
 
