@@ -184,6 +184,14 @@ def get_params():
         return ARGS.param_order + remaining_params
     return [k for k in PARAM_PATTERN_LOOKUP.keys()]
 
+def get_types():
+    if ARGS.type_order:
+        remaining_types = [
+            k for k in DEFAULT_TYPE_ORDER if k not in ARGS.type_order
+        ]
+        return ARGS.type_order + remaining_types
+    return DEFAULT_TYPE_ORDER
+
 def get_required_params():
     if ARGS.check_required_params:
         return {
@@ -256,7 +264,7 @@ def get_field_params(fields):
 def get_fields_content(fields, line_number_offset=0, warnings=[]):
     fields_content = ""
     required_params = get_required_params()
-    for field_type in ARGS.type_order:
+    for field_type in get_types():
         for field in filter_fields_by_type(field_type, fields):
             required_params_for_type = required_params[field_type]
             field_name = field["field_name"]
@@ -294,6 +302,14 @@ def format_warnings(warnings, file_path):
         )
     return formatted
 
+def convert_str_to_bool(input_str):
+    if isinstance(input_str, bool):
+        return input_str
+    if input_str.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif input_str.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    return False
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -327,7 +343,7 @@ def parse_args():
 
     parser.add_argument(
         "--primary_key_first",
-        type=bool,
+        type=convert_str_to_bool,
         help="Should primary key be ordered first.",
         required=False,
         default=True,
@@ -335,7 +351,7 @@ def parse_args():
 
     parser.add_argument(
         "--order_by_label",
-        type=bool,
+        type=convert_str_to_bool,
         help="Should fields be ordered by their labels.",
         required=False,
         default=True,
@@ -351,7 +367,7 @@ def parse_args():
 
     parser.add_argument(
         "--order_fields",
-        type=bool,
+        type=convert_str_to_bool,
         help="Should fields be ordered.",
         required=False,
         default=True,
@@ -359,7 +375,7 @@ def parse_args():
 
     parser.add_argument(
         "--order_field_parameters",
-        type=bool,
+        type=convert_str_to_bool,
         help="Should field parameters be ordered.",
         required=False,
         default=True,
@@ -367,7 +383,7 @@ def parse_args():
 
     parser.add_argument(
         "--check_required_params",
-        type=bool,
+        type=convert_str_to_bool,
         help="Should required parameters be checked.",
         required=False,
         default=False,
