@@ -1,4 +1,3 @@
-import sys
 import regex as re
 import argparse
 import json
@@ -27,20 +26,6 @@ DEFAULT_PARAM_ORDER = [
     "filters",
     "drill_fields",
 ]
-REQUIRED_PARAMS = {
-    "filter": [],
-    "parameter": [],
-    "dimension": ["label"],
-    "dimension_group": ["label"],
-    "measure": ["label", "drill_fields"],
-    "set": [],
-}
-OPTIONS = {
-    "sort_fields": True,
-    "sort_field_parameters": True,
-    "check_required_params": True,
-    "primary_key_first": True,
-}
 PATTERNS = [
     {"name": "braces", "pattern": r"(\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\})"},
     {"name": "brackets", "pattern": r"(\[[^[\]]*\])"},
