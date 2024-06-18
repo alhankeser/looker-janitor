@@ -191,12 +191,32 @@ def get_pattern_field_lookup():
     return lookup
 
 
-def get_sorted_params():
-    remaining_params = [
-        k for k in PARAM_PATTERN_LOOKUP.keys() if k not in ARGS.param_order
-    ]
-    return ARGS.param_order + remaining_params
+def get_params():
+    if ARGS.order_field_parameters:
+        remaining_params = [
+            k for k in PARAM_PATTERN_LOOKUP.keys() if k not in ARGS.param_order
+        ]
+        return ARGS.param_order + remaining_params
+    return [k for k in PARAM_PATTERN_LOOKUP.keys()]
 
+def get_required_params():
+    if ARGS.check_required_params:
+        return {
+            "filter": ARGS.required_filter,
+            "parameter": ARGS.required_parameter,
+            "dimension": ARGS.required_dimension,
+            "dimension_group": ARGS.required_dimension_group,
+            "measure": ARGS.required_measure,
+            "set": ARGS.required_set,
+        }
+    return {
+        "filter": [],
+        "parameter": [],
+        "dimension": [],
+        "dimension_group": [],
+        "measure": [],
+        "set": [],
+    }
 
 def get_localization_data():
     localization_data = {}
@@ -250,29 +270,30 @@ def get_field_params(fields):
 
 def get_fields_content(fields, line_number_offset=0, warnings=[]):
     fields_content = ""
+    required_params = get_required_params()
     for field_type in ARGS.type_order:
         for field in filter_fields_by_type(field_type, fields):
-            required_params = REQUIRED_PARAMS[field_type]
+            required_params_for_type = required_params[field_type]
             field_name = field["field_name"]
             fields_content += "\n  " + field_type + ": " + field_name + " {"
-            for param_type in get_sorted_params():
+            for param_type in get_params():
                 for param_in_field in filter_params_by_type(
                     field["params"], param_type
                 ):
                     fields_content += "\n    " + param_in_field["param_content"]
                     param_type = param_in_field["param_type"]
-                    if param_type in required_params:
-                        required_params.remove(param_type)
+                    if param_type in required_params_for_type:
+                        required_params_for_type.remove(param_type)
             if len(field["field_remaining_content"].strip()) > 0:
                 fields_content += "\n    " + field["field_remaining_content"]
             fields_content += "\n  }\n"
-            if len(required_params) > 0:
+            if len(required_params_for_type) > 0 and ARGS.check_required_params:
                 line_number = fields_content.count("\n")
                 warnings.append(
                     {
                         "line_number": line_number + line_number_offset,
                         "message": f"{field_type} '{field_name}' missing "
-                        + ",".join(required_params),
+                        + ",".join(required_params_for_type),
                     }
                 )
     return fields_content, warnings

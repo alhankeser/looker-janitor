@@ -27,13 +27,6 @@ view: orders {
     primary_key: yes
   }
 
-  dimension: total_amount {
-    type: number
-    label: "orders.total_amount.label"
-    sql: ${TABLE}.total_amount ;;
-    value_format: "$#,##0.00"
-  }
-
   dimension: customer_id {
     type: number
     sql: ${TABLE}.customer_id ;;
@@ -48,6 +41,13 @@ view: orders {
     type: string
     description: "The status of the order (e.g., 'shipped', 'pending')"
     sql: ${TABLE}.order_status ;;
+  }
+
+  dimension: total_amount {
+    type: number
+    label: "orders.total_amount.label"
+    sql: ${TABLE}.total_amount ;;
+    value_format: "$#,##0.00"
   }
 
   measure: average_order_value {
