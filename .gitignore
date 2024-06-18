@@ -1,4 +1,6 @@
 .venv
 **.view.lkml
+!input.view.lkml
+!expected.view.lkml
 !example_input.view.lkml
 .pytest*
