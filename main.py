@@ -1,7 +1,6 @@
 import regex as re
 import argparse
 import json
-import sys
 
 DEFAULT_TYPE_ORDER = [
     "filter",
@@ -488,6 +487,7 @@ def main():
             )
     if ARGS.check_required_params:
         print(format_warnings(warnings, file_path))
+
 
 if __name__ == "__main__":
     ARGS = parse_args()
