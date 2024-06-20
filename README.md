@@ -1,3 +1,5 @@
+[![Tests](https://github.com/alhankeser/looker-janitor/actions/workflows/test.yaml/badge.svg?branch=main)](https://github.com/alhankeser/looker-janitor/actions/workflows/test.yaml)
+
 ## Looker Janitor
 Consistently clean-up your LookML.
 
