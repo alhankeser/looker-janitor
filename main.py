@@ -29,9 +29,9 @@ DEFAULT_PARAM_ORDER = [
 PATTERNS = [
     {"name": "braces", "pattern": r"(\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\})"},
     {"name": "brackets", "pattern": r"(\[[^[\]]*\])"},
-    {"name": "quotes", "pattern": r"((?:'|\")(?:\W|\w)[^\"]+(?:'|\"))"},
+    {"name": "quotes", "pattern": r"(\"(?:\\.|[^\"])*\"|'(?:\\.|[^\'])*')"},
     {"name": "no_quotes", "pattern": r"(\w+)"},
-    {"name": "double_semicolon", "pattern": r"(.*?);;"},
+    {"name": "double_semicolon", "pattern": r"([\W|\w]*?);;"},
 ]
 PARAM_PATTERN_LOOKUP = {
     "action": "braces",
@@ -176,21 +176,25 @@ def get_pattern_field_lookup():
     return lookup
 
 
-def get_params():
+def get_params(params):
+    params_sorted_by_original_order = [
+        x["param_type"]
+        for x in sorted(params, key=lambda x: x["param_original_position"])
+    ]
     if ARGS.order_field_parameters:
         remaining_params = [
-            k for k in PARAM_PATTERN_LOOKUP.keys() if k not in ARGS.param_order
+            x for x in params_sorted_by_original_order if x not in ARGS.param_order
         ]
         return ARGS.param_order + remaining_params
-    return [k for k in PARAM_PATTERN_LOOKUP.keys()]
+    return [x for x in params_sorted_by_original_order]
+
 
 def get_types():
     if ARGS.type_order:
-        remaining_types = [
-            k for k in DEFAULT_TYPE_ORDER if k not in ARGS.type_order
-        ]
+        remaining_types = [k for k in DEFAULT_TYPE_ORDER if k not in ARGS.type_order]
         return ARGS.type_order + remaining_types
     return DEFAULT_TYPE_ORDER
+
 
 def get_required_params():
     if ARGS.check_required_params:
@@ -210,6 +214,7 @@ def get_required_params():
         "measure": [],
         "set": [],
     }
+
 
 def get_localization_data():
     localization_data = {}
@@ -237,7 +242,10 @@ def get_field_params(fields):
         field["label"] = ""
         start_index = field["fields_content"].find("{")
         end_index = field["fields_content"].rfind("}")
-        fields_content = field["fields_content"][start_index + 1 : end_index - 1]
+        original_fields_content = field["fields_content"][
+            start_index + 1 : end_index - 1
+        ]
+        fields_content = original_fields_content
         if len(fields_content) == 0:
             continue
         for pattern in PATTERNS:
@@ -246,10 +254,14 @@ def get_field_params(fields):
                 param_search_pattern = param_type + "\\s*:\\s*" + pattern["pattern"]
                 match = re.search(rf"{param_search_pattern}", fields_content)
                 while match:
+                    original_position, _ = re.search(
+                        rf"{param_search_pattern}", original_fields_content
+                    ).span()
                     field["params"].append(
                         {
                             "param_type": param_type,
                             "param_content": match.group(),
+                            "param_original_position": original_position,
                         }
                     )
                     if param_type == "label":
@@ -269,7 +281,7 @@ def get_fields_content(fields, line_number_offset=0, warnings=[]):
             required_params_for_type = required_params[field_type]
             field_name = field["field_name"]
             fields_content += "\n  " + field_type + ": " + field_name + " {"
-            for param_type in get_params():
+            for param_type in get_params(field["params"]):
                 for param_in_field in filter_params_by_type(
                     field["params"], param_type
                 ):
@@ -302,14 +314,16 @@ def format_warnings(warnings, file_path):
         )
     return formatted
 
+
 def convert_str_to_bool(input_str):
     if isinstance(input_str, bool):
         return input_str
-    if input_str.lower() in ('yes', 'true', 't', 'y', '1'):
+    if input_str.lower() in ("yes", "true", "t", "y", "1"):
         return True
-    elif input_str.lower() in ('no', 'false', 'f', 'n', '0'):
+    elif input_str.lower() in ("no", "false", "f", "n", "0"):
         return False
     return False
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -471,8 +485,8 @@ def main():
                 + fields_content
                 + remaining_content[closing_tag_index:]
             )
-
-    return format_warnings(warnings, file_path)
+    if ARGS.check_required_params:
+        print(format_warnings(warnings, file_path))
 
 
 if __name__ == "__main__":
