@@ -2,7 +2,6 @@ import regex as re
 import argparse
 import json
 import lkml
-from pprint import pprint
 
 DEFAULT_TYPE_ORDER = [
     "filter",
@@ -28,127 +27,6 @@ DEFAULT_PARAM_ORDER = [
     "filters",
     "drill_fields",
 ]
-PATTERNS = [
-    {"name": "braces", "pattern": r"(\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\})"},
-    {"name": "brackets", "pattern": r"(\[[^[\]]*\])"},
-    {"name": "quotes", "pattern": r"(\"(?:\\.|[^\"])*\"|'(?:\\.|[^\'])*')"},
-    {"name": "no_quotes", "pattern": r"(\w+)"},
-    {"name": "double_semicolon", "pattern": r"([\W|\w]*?);;"},
-]
-PARAM_PATTERN_LOOKUP = {
-    "action": "braces",
-    "alias": "brackets",
-    "allow_approximate_optimization": "no_quotes",
-    "allow_fill": "no_quotes",
-    "allowed_value": "braces",
-    "alpha_sort": "no_quotes",
-    "approximate": "no_quotes",
-    "approximate_threshold": "no_quotes",
-    "bypass_suggest_restrictions": "no_quotes",
-    "can_filter": "no_quotes",
-    "case": "braces",
-    "case_sensitive": "no_quotes",
-    "convert_tz": "no_quotes",
-    "datatype": "no_quotes",
-    "default_value": "quotes",
-    "description": "quotes",
-    "direction": "quotes",
-    "drill_fields": "brackets",
-    "end_location_field": "no_quotes",
-    "fanout_on": "no_quotes",
-    "fields": "brackets",
-    "filters": "brackets",
-    "full_suggestions": "no_quotes",
-    "group_item_label": "quotes",
-    "group_label": "quotes",
-    "hidden": "no_quotes",
-    "html": "double_semicolon",
-    "intervals": "brackets",
-    "label": "quotes",
-    "label_from_parameter": "no_quotes",
-    "link": "braces",
-    "list_field": "no_quotes",
-    "map_layer_name": "no_quotes",
-    "order_by_field": "no_quotes",
-    "percentile": "no_quotes",
-    "precision": "no_quotes",
-    "primary_key": "no_quotes",
-    "required_access_grants": "brackets",
-    "required_fields": "brackets",
-    "skip_drill_filter": "no_quotes",
-    "sql": "double_semicolon",
-    "sql_distinct_key": "double_semicolon",
-    "sql_end": "double_semicolon",
-    "sql_latitude": "double_semicolon",
-    "sql_longitude": "double_semicolon",
-    "sql_start": "double_semicolon",
-    "start_location_field": "no_quotes",
-    "string_datatype": "no_quotes",
-    "style": "no_quotes",
-    "suggest_dimension": "no_quotes",
-    "suggest_explore": "no_quotes",
-    "suggest_persist_for": "quotes",
-    "suggestable": "no_quotes",
-    "suggestions": "brackets",
-    "tags": "brackets",
-    "tiers": "brackets",
-    "timeframes": "brackets",
-    "type": "no_quotes",
-    "units": "no_quotes",
-    "value_format": "quotes",
-    "value_format_name": "no_quotes",
-    "view_label": "quotes",
-}
-
-
-def filter_fields_by_type(field_type, fields):
-    filtered_list = [item for item in fields if item["field_type"] == field_type]
-    return filtered_list
-
-
-def sort_fields(fields):
-    sorted_list = sorted(fields, key=lambda x: x["sort_key"].lower())
-    if ARGS.primary_key_first:
-        sorted_list = sorted(
-            sorted_list,
-            key=lambda x: x["is_primary_key"],
-            reverse=True,
-        )
-    return sorted_list
-
-
-# def get_fields(file_content):
-#     field_regex = (
-#         r"((filter|parameter|dimension|dimension_group|measure|set)\s*:\s*(\w+)\s*{)"
-#     )
-#     matching_fields = re.findall(field_regex, file_content, re.DOTALL)
-#     fields = []
-#     remaining_content = file_content
-#     for field_first_line_complete, field_type, field_name in matching_fields:
-#         fields.append(
-#             {
-#                 "field_name": field_name,
-#                 "field_type": field_type,
-#                 "start_index": file_content.find(field_first_line_complete),
-#             }
-#         )
-#     for i, field in enumerate(fields):
-#         if i < len(fields) - 1:
-#             fields[i]["end_index"] = (
-#                 file_content[: fields[i + 1]["start_index"]].rfind("}") + 1
-#             )
-#         else:
-#             parent_end_index = get_parent_end_index(file_content)
-#             fields[i]["end_index"] = file_content[:parent_end_index].rfind("}") + 1
-#         fields[i]["fields_content"] = file_content[
-#             fields[i]["start_index"] : fields[i]["end_index"]
-#         ]
-#         fields[i]["is_primary_key"] = (
-#             fields[i]["fields_content"].find("primary_key: yes") > -1
-#         )
-#     for field in fields:
-#         remaining_content = remaining_content.replace(field["fields_content"], "")
-#     return fields, re.sub(r"\n\s*\n", "\n", remaining_content)
 
 
 def get_fields(fields):
@@ -157,11 +35,18 @@ def get_fields(fields):
         for i, field in enumerate(fields):
             fields[i] = get_params(field)
             has_label = "label" in fields[i].keys()
-            fields[i]["sort_key"] = (
-                fields[i]["label"]
-                if ARGS.order_fields_by_label and has_label
-                else fields[i]["name"]
-            )
+            if (
+                ARGS.primary_key_first
+                and "primary_key" in field.keys()
+                and field["primary_key"].lower() == "yes"
+            ):
+                fields[i]["sort_key"] = "-1"
+            else:
+                fields[i]["sort_key"] = (
+                    fields[i]["label"]
+                    if ARGS.order_fields_by_label and has_label
+                    else fields[i]["name"]
+                )
             if fields[i]["sort_key"] in localization_data.keys():
                 fields[i]["sort_key"] = localization_data[fields[i]["sort_key"]]
         fields = [
@@ -169,33 +54,6 @@ def get_fields(fields):
             for field in sorted(fields, key=lambda x: x["sort_key"].lower())
         ]
     return fields
-
-
-def get_parent_end_index(file_content):
-    return file_content.rfind("}")
-
-
-def filter_patterns_by_name(pattern_name):
-    return [x for x in PATTERNS if x["name"] == pattern_name][0]
-
-
-def filter_fields_by_pattern(pattern_name):
-    return [k for k, v in PARAM_PATTERN_LOOKUP.items() if v == pattern_name]
-
-
-def filter_params_by_type(filter_params, param_type):
-    return [x for x in filter_params if x["param_type"] == param_type]
-
-
-def sort_params_by_len(params):
-    return [x for x in sorted(params, key=len, reverse=True)]
-
-
-def get_pattern_field_lookup():
-    lookup = {}
-    for pattern in PATTERNS:
-        lookup[pattern["name"]] = filter_fields_by_pattern(pattern["name"])
-    return lookup
 
 
 def get_params(field):
@@ -214,13 +72,6 @@ def get_params(field):
         ]
         field = dict(sorted_params)
     return field
-
-
-def get_types():
-    if ARGS.type_order:
-        remaining_types = [k for k in DEFAULT_TYPE_ORDER if k not in ARGS.type_order]
-        return ARGS.type_order + remaining_types
-    return DEFAULT_TYPE_ORDER
 
 
 def get_required_params():
@@ -250,76 +101,6 @@ def get_field_sort_key(field, localization_data):
             label = localization_data[label]
         sort_key = label
     return sort_key
-
-
-def get_field_params(fields):
-    pattern_field_lookup = get_pattern_field_lookup()
-    localization_data = get_localization_data()
-    for field in fields:
-        field["params"] = []
-        field["label"] = ""
-        start_index = field["fields_content"].find("{")
-        end_index = field["fields_content"].rfind("}")
-        original_fields_content = field["fields_content"][
-            start_index + 1 : end_index - 1
-        ]
-        fields_content = original_fields_content
-        if len(fields_content) == 0:
-            continue
-        for pattern in PATTERNS:
-            params = pattern_field_lookup[pattern["name"]]
-            for param_type in sort_params_by_len(params):
-                param_search_pattern = param_type + "\\s*:\\s*" + pattern["pattern"]
-                match = re.search(rf"{param_search_pattern}", fields_content)
-                while match:
-                    original_position, _ = re.search(
-                        rf"{param_search_pattern}", original_fields_content
-                    ).span()
-                    field["params"].append(
-                        {
-                            "param_type": param_type,
-                            "param_content": match.group(),
-                            "param_original_position": original_position,
-                        }
-                    )
-                    if param_type == "label":
-                        field["label"] = match.group().strip()
-                    fields_content = fields_content.replace(match.group(), "")
-                    match = re.search(rf"{param_search_pattern}", fields_content)
-        field["field_remaining_content"] = fields_content.strip()
-        field["sort_key"] = get_field_sort_key(field, localization_data)
-    return fields
-
-
-def get_fields_content(fields, line_number_offset=0, warnings=[]):
-    fields_content = ""
-    required_params = get_required_params()
-    for field_type in get_types():
-        for field in filter_fields_by_type(field_type, fields):
-            required_params_for_type = required_params[field_type]
-            field_name = field["field_name"]
-            fields_content += "\n  " + field_type + ": " + field_name + " {"
-            for param_type in get_params(field["params"]):
-                for param_in_field in filter_params_by_type(
-                    field["params"], param_type
-                ):
-                    fields_content += "\n    " + param_in_field["param_content"]
-                    param_type = param_in_field["param_type"]
-                    if param_type in required_params_for_type:
-                        required_params_for_type.remove(param_type)
-            if len(field["field_remaining_content"].strip()) > 0:
-                fields_content += "\n    " + field["field_remaining_content"]
-            fields_content += "\n  }\n"
-            if len(required_params_for_type) > 0 and ARGS.check_required_params:
-                line_number = fields_content.count("\n")
-                warnings.append(
-                    {
-                        "line_number": line_number + line_number_offset,
-                        "message": f"{field_type} '{field_name}' missing "
-                        + ",".join(required_params_for_type),
-                    }
-                )
-    return fields_content, warnings
 
 
 def convert_str_to_bool(input_str):
@@ -521,7 +302,7 @@ def get_warning_line_numbers(warnings, lookml_out):
     for i, warning in enumerate(warnings):
         field_regex = get_field_regex(warning)
         match = re.search(field_regex, lookml_out)
-        warnings[i]["line_number"] = lookml_out[:match.start(1)].count("\n")
+        warnings[i]["line_number"] = lookml_out[: match.start(1)].count("\n")
     return warnings
 
 
@@ -556,9 +337,9 @@ def main():
                 view_out[field_type] = get_fields(view_in[field_type])
 
             parsed_lookml["views"][i] = view_out
-            
+
             lookml_out = lkml.dump(parsed_lookml)
-            
+
             if ARGS.check_required_params:
                 warnings = check_required_params(required_params, view_out, warnings)
                 warnings = get_warning_line_numbers(warnings, lookml_out)
