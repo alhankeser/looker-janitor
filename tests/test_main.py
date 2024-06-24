@@ -104,7 +104,7 @@ def test_order_by_label():
 def test_order_by_label_param():
     output, expected = setup_file_comparison_test("test_order_by_label_param")
     subprocess.run(
-        ["python", "main.py", "--files", output, "--order_by_label", "false"]
+        ["python", "main.py", "--files", output, "--order_fields_by_label", "false"]
     )
     assert files_match(output, expected)
 
@@ -159,7 +159,7 @@ def test_check_required_params_param():
             "label",
         ]
     ).decode("utf-8")
-    assert "output.view.lkml:14: dimension 'b_dimension_name' missing label" in warnings
+    assert "output.view.lkml:11: dimension 'b_dimension_name' missing label" in warnings
     warnings = subprocess.check_output(
         [
             "python",
@@ -172,4 +172,4 @@ def test_check_required_params_param():
             "label sql hidden",
         ]
     ).decode("utf-8")
-    assert "tests/test_files/test_check_required_params_param/output.view.lkml:10: dimension 'a_dimension_name' missing label sql hidden" in warnings
+    assert "tests/test_files/test_check_required_params_param/output.view.lkml:11: dimension 'b_dimension_name' missing label sql hidden" in warnings

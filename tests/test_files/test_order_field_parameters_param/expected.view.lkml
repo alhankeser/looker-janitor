@@ -18,9 +18,10 @@ view: orders {
   }
 
   measure: a_measure_name {
-    filters: [b_dimension_name: "> 10"]
-    sql: 
-      case when ${a_dimension_name} > 100 then "yes"
+    filters: [
+      b_dimension_name: "> 10",
+    ]
+    sql: case when ${a_dimension_name} > 100 then "yes"
         else "no"
       end ;;
     description: "a measure description"

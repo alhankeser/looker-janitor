@@ -4,3 +4,4 @@
 !expected.view.lkml
 !example_input.view.lkml
 .pytest*
+**__pycache__
