@@ -202,12 +202,12 @@ def get_params(field):
     if ARGS.order_field_parameters:
         sort_keys = {}
         original_params = list(field.keys())
-        offset = len(ARGS.param_order)
+        custom_order_count = len(ARGS.param_order)
         for param_name in original_params:
             sort_keys[param_name] = (
                 ARGS.param_order.index(param_name)
                 if param_name in ARGS.param_order
-                else (original_params.index(param_name) + offset)
+                else (original_params.index(param_name) + custom_order_count)
             )
         sorted_params = [
             item for item in sorted(field.items(), key=lambda x: sort_keys[x[0]])
@@ -493,17 +493,20 @@ def get_non_field_types(view):
 
 def check_required_params(required, view, warnings):
     for field_type, required_params in required.items():
-        for field in view[field_type]:
-            if len(field.keys()) < len(set(list(field.keys()) + required_params)):
-                missing_params = [x for x in required_params if x not in field.keys()]
-                warnings.append(
-                    {
-                        "view_name": view["name"],
-                        "field_type": field_type[:-1],
-                        "field_name": field["name"],
-                        "parameters": missing_params,
-                    }
-                )
+        if field_type in view.keys():
+            for field in view[field_type]:
+                if len(field.keys()) < len(set(list(field.keys()) + required_params)):
+                    missing_params = [
+                        x for x in required_params if x not in field.keys()
+                    ]
+                    warnings.append(
+                        {
+                            "view_name": view["name"],
+                            "field_type": field_type[:-1],
+                            "field_name": field["name"],
+                            "parameters": missing_params,
+                        }
+                    )
     return warnings
 
 
@@ -518,27 +521,29 @@ def get_warning_line_numbers(warnings, lookml_out):
     for i, warning in enumerate(warnings):
         field_regex = get_field_regex(warning)
         match = re.search(field_regex, lookml_out)
-        warnings[i]["line_number"] = match.start(1)
+        warnings[i]["line_number"] = lookml_out[:match.start(1)].count("\n")
     return warnings
 
 
 def format_warnings(warnings, file_path):
     formatted_warnings = ""
     for warning in warnings:
-        formatted_warnings += "{file_path}:{line_number}: {message}\n".format(
+        formatted_warnings += "{file_path}:{line_number}: {field_type} '{field_name}' missing {missing}\n".format(
             file_path=file_path,
             line_number=warning["line_number"],
-            message="Missing " + ",".join([x for x in warning["parameters"]]),
+            missing="".join(warning["parameters"]),
+            field_name=warning["field_name"],
+            field_type=warning["field_type"],
         )
     return formatted_warnings
 
 
 def main():
 
-    warnings = []
+    all_warnings = ""
     required_params = get_required_params()
     for file_path in ARGS.files:
-
+        warnings = []
         with open(file_path, "r") as file:
             lookml = file.read()
             parsed_lookml = lkml.load(lookml)
@@ -551,17 +556,19 @@ def main():
                 view_out[field_type] = get_fields(view_in[field_type])
 
             parsed_lookml["views"][i] = view_out
+            
+            lookml_out = lkml.dump(parsed_lookml)
+            
             if ARGS.check_required_params:
                 warnings = check_required_params(required_params, view_out, warnings)
+                warnings = get_warning_line_numbers(warnings, lookml_out)
+                all_warnings += format_warnings(warnings, file_path)
 
-    lookml_out = lkml.dump(parsed_lookml)
-
-    with open(file_path, "w") as file:
-        file.write(lookml_out + "\n")
+        with open(file_path, "w") as file:
+            file.write(lookml_out + "\n")
 
     if ARGS.check_required_params:
-        warnings = get_warning_line_numbers(warnings, lookml_out)
-        print(format_warnings(warnings, file_path))
+        print(all_warnings)
 
 
 if __name__ == "__main__":

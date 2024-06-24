@@ -13,6 +13,8 @@ view: orders {
   measure: a_measure_name {
     sql: ${TABLE}."a_dimension_name" ;;
     type: average
-    filters: [something: "Yes"]
+    filters: [
+      something: "Yes",
+    ]
   }
 }
