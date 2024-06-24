@@ -1,6 +1,8 @@
 import regex as re
 import argparse
 import json
+import lkml
+from pprint import pprint
 
 DEFAULT_TYPE_ORDER = [
     "filter",
@@ -115,38 +117,57 @@ def sort_fields(fields):
     return sorted_list
 
 
-def get_fields(file_content):
-    field_regex = (
-        r"((filter|parameter|dimension|dimension_group|measure|set)\s*:\s*(\w+)\s*{)"
-    )
-    matching_fields = re.findall(field_regex, file_content, re.DOTALL)
-    fields = []
-    remaining_content = file_content
-    for field_first_line_complete, field_type, field_name in matching_fields:
-        fields.append(
-            {
-                "field_name": field_name,
-                "field_type": field_type,
-                "start_index": file_content.find(field_first_line_complete),
-            }
-        )
-    for i, field in enumerate(fields):
-        if i < len(fields) - 1:
-            fields[i]["end_index"] = (
-                file_content[: fields[i + 1]["start_index"]].rfind("}") + 1
+# def get_fields(file_content):
+#     field_regex = (
+#         r"((filter|parameter|dimension|dimension_group|measure|set)\s*:\s*(\w+)\s*{)"
+#     )
+#     matching_fields = re.findall(field_regex, file_content, re.DOTALL)
+#     fields = []
+#     remaining_content = file_content
+#     for field_first_line_complete, field_type, field_name in matching_fields:
+#         fields.append(
+#             {
+#                 "field_name": field_name,
+#                 "field_type": field_type,
+#                 "start_index": file_content.find(field_first_line_complete),
+#             }
+#         )
+#     for i, field in enumerate(fields):
+#         if i < len(fields) - 1:
+#             fields[i]["end_index"] = (
+#                 file_content[: fields[i + 1]["start_index"]].rfind("}") + 1
+#             )
+#         else:
+#             parent_end_index = get_parent_end_index(file_content)
+#             fields[i]["end_index"] = file_content[:parent_end_index].rfind("}") + 1
+#         fields[i]["fields_content"] = file_content[
+#             fields[i]["start_index"] : fields[i]["end_index"]
+#         ]
+#         fields[i]["is_primary_key"] = (
+#             fields[i]["fields_content"].find("primary_key: yes") > -1
+#         )
+#     for field in fields:
+#         remaining_content = remaining_content.replace(field["fields_content"], "")
+#     return fields, re.sub(r"\n\s*\n", "\n", remaining_content)
+
+
+def get_fields(fields):
+    if ARGS.order_fields:
+        localization_data = get_localization_data()
+        for field in fields:
+            has_label = "label" in field.keys()
+            field["sort_key"] = (
+                field["label"]
+                if ARGS.order_fields_by_label and has_label
+                else field["name"]
             )
-        else:
-            parent_end_index = get_parent_end_index(file_content)
-            fields[i]["end_index"] = file_content[:parent_end_index].rfind("}") + 1
-        fields[i]["fields_content"] = file_content[
-            fields[i]["start_index"] : fields[i]["end_index"]
+            if field["sort_key"] in localization_data.keys():
+                field["sort_key"] = localization_data[field["sort_key"]]
+        fields = [
+            {k: v for k, v in field.items() if k != "sort_key"}
+            for field in sorted(fields, key=lambda x: x["sort_key"].lower())
         ]
-        fields[i]["is_primary_key"] = (
-            fields[i]["fields_content"].find("primary_key: yes") > -1
-        )
-    for field in fields:
-        remaining_content = remaining_content.replace(field["fields_content"], "")
-    return fields, re.sub(r"\n\s*\n", "\n", remaining_content)
+    return fields
 
 
 def get_parent_end_index(file_content):
@@ -197,22 +218,13 @@ def get_types():
 
 
 def get_required_params():
-    if ARGS.check_required_params:
-        return {
-            "filter": ARGS.required_filter,
-            "parameter": ARGS.required_parameter,
-            "dimension": ARGS.required_dimension,
-            "dimension_group": ARGS.required_dimension_group,
-            "measure": ARGS.required_measure,
-            "set": ARGS.required_set,
-        }
     return {
-        "filter": [],
-        "parameter": [],
-        "dimension": [],
-        "dimension_group": [],
-        "measure": [],
-        "set": [],
+        "filters": ARGS.required_filter,
+        "parameters": ARGS.required_parameter,
+        "dimensions": ARGS.required_dimension,
+        "dimension_groups": ARGS.required_dimension_group,
+        "measures": ARGS.required_measure,
+        "sets": ARGS.required_set,
     }
 
 
@@ -226,7 +238,7 @@ def get_localization_data():
 
 def get_field_sort_key(field, localization_data):
     sort_key = field["field_name"]
-    if ARGS.order_by_label and not field["label"] == "":
+    if ARGS.order_fields_by_label and not field["label"] == "":
         label = re.search(rf"[\"|\']([\w|\W]+)[\"|\']", field["label"]).group(1)
         if label in localization_data.keys():
             label = localization_data[label]
@@ -304,17 +316,6 @@ def get_fields_content(fields, line_number_offset=0, warnings=[]):
     return fields_content, warnings
 
 
-def format_warnings(warnings, file_path):
-    formatted = ""
-    for warning in warnings:
-        formatted += "{file_path}:{line_number}: {message}\n".format(
-            file_path=file_path,
-            line_number=warning["line_number"],
-            message=warning["message"],
-        )
-    return formatted
-
-
 def convert_str_to_bool(input_str):
     if isinstance(input_str, bool):
         return input_str
@@ -364,9 +365,17 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--order_by_label",
+        "--order_fields_by_label",
         type=convert_str_to_bool,
         help="Should fields be ordered by their labels.",
+        required=False,
+        default=True,
+    )
+
+    parser.add_argument(
+        "--order_types",
+        type=convert_str_to_bool,
+        help="Should fields be ordered by their types.",
         required=False,
         default=True,
     )
@@ -460,32 +469,92 @@ def parse_args():
     return parser.parse_args()
 
 
+def get_field_types(view):
+    if ARGS.order_types:
+        ordered_types = [x + "s" for x in ARGS.type_order if x + "s" in view.keys()]
+        remaining_types = [
+            x
+            for x in view.keys()
+            if x[:-1] in DEFAULT_TYPE_ORDER and x not in ordered_types
+        ]
+        return ordered_types + remaining_types
+    return [x for x in view.keys() if x[:-1] in DEFAULT_TYPE_ORDER]
+
+
+def get_non_field_types(view):
+    return [x for x in view.keys() if x[:-1] not in DEFAULT_TYPE_ORDER]
+
+
+def check_required_params(required, view, warnings):
+    for field_type, required_params in required.items():
+        for field in view[field_type]:
+            if len(field.keys()) < len(set(list(field.keys()) + required_params)):
+                missing_params = [x for x in required_params if x not in field.keys()]
+                warnings.append(
+                    {
+                        "view_name": view["name"],
+                        "field_type": field_type[:-1],
+                        "field_name": field["name"],
+                        "parameters": missing_params,
+                    }
+                )
+    return warnings
+
+
+def get_field_regex(warning):
+    view_name = warning["view_name"]
+    field_type = warning["field_type"]
+    field_name = warning["field_name"]
+    return rf"view:\s{view_name}\s\{{[\s\S]*?({field_type}:\s{field_name}\s\{{[\s\S]*?\}}[\s\S]*?\}})"
+
+
+def get_warning_line_numbers(warnings, lookml_out):
+    for i, warning in enumerate(warnings):
+        field_regex = get_field_regex(warning)
+        match = re.search(field_regex, lookml_out)
+        warnings[i]["line_number"] = match.start(1)
+    return warnings
+
+
+def format_warnings(warnings, file_path):
+    formatted_warnings = ""
+    for warning in warnings:
+        formatted_warnings += "{file_path}:{line_number}: {message}\n".format(
+            file_path=file_path,
+            line_number=warning["line_number"],
+            message="Missing " + ",".join([x for x in warning["parameters"]]),
+        )
+    return formatted_warnings
+
+
 def main():
 
     warnings = []
+    required_params = get_required_params()
     for file_path in ARGS.files:
 
         with open(file_path, "r") as file:
-            file_content = file.read()
-            fields, remaining_content = get_fields(file_content)
-            fields = get_field_params(fields)
-            if ARGS.order_fields:
-                fields = sort_fields(fields)
-            closing_tag_index = remaining_content.rfind("}")
-            file.close()
+            lookml = file.read()
+            parsed_lookml = lkml.load(lookml)
 
-        line_number_offset = remaining_content[:closing_tag_index].count("\n")
-        fields_content, warnings = get_fields_content(
-            fields, line_number_offset, warnings
-        )
+        for i, view_in in enumerate(parsed_lookml["views"]):
+            view_out = {}
+            for field_type in get_non_field_types(view_in):
+                view_out[field_type] = view_in[field_type]
+            for field_type in get_field_types(view_in):
+                view_out[field_type] = get_fields(view_in[field_type])
 
-        with open(file_path, "w") as file:
-            file.write(
-                remaining_content[:closing_tag_index]
-                + fields_content
-                + remaining_content[closing_tag_index:]
-            )
+            parsed_lookml["views"][i] = view_out
+            if ARGS.check_required_params:
+                warnings = check_required_params(required_params, view_out, warnings)
+
+    lookml_out = lkml.dump(parsed_lookml)
+
+    with open(file_path, "w") as file:
+        file.write(lookml_out)
+
     if ARGS.check_required_params:
+        warnings = get_warning_line_numbers(warnings, lookml_out)
         print(format_warnings(warnings, file_path))
 
 
