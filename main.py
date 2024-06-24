@@ -154,15 +154,16 @@ def sort_fields(fields):
 def get_fields(fields):
     if ARGS.order_fields:
         localization_data = get_localization_data()
-        for field in fields:
-            has_label = "label" in field.keys()
-            field["sort_key"] = (
-                field["label"]
+        for i, field in enumerate(fields):
+            fields[i] = get_params(field)
+            has_label = "label" in fields[i].keys()
+            fields[i]["sort_key"] = (
+                fields[i]["label"]
                 if ARGS.order_fields_by_label and has_label
-                else field["name"]
+                else fields[i]["name"]
             )
-            if field["sort_key"] in localization_data.keys():
-                field["sort_key"] = localization_data[field["sort_key"]]
+            if fields[i]["sort_key"] in localization_data.keys():
+                fields[i]["sort_key"] = localization_data[fields[i]["sort_key"]]
         fields = [
             {k: v for k, v in field.items() if k != "sort_key"}
             for field in sorted(fields, key=lambda x: x["sort_key"].lower())
@@ -197,17 +198,22 @@ def get_pattern_field_lookup():
     return lookup
 
 
-def get_params(params):
-    params_sorted_by_original_order = [
-        x["param_type"]
-        for x in sorted(params, key=lambda x: x["param_original_position"])
-    ]
+def get_params(field):
     if ARGS.order_field_parameters:
-        remaining_params = [
-            x for x in params_sorted_by_original_order if x not in ARGS.param_order
+        sort_keys = {}
+        original_params = list(field.keys())
+        offset = len(ARGS.param_order)
+        for param_name in original_params:
+            sort_keys[param_name] = (
+                ARGS.param_order.index(param_name)
+                if param_name in ARGS.param_order
+                else (original_params.index(param_name) + offset)
+            )
+        sorted_params = [
+            item for item in sorted(field.items(), key=lambda x: sort_keys[x[0]])
         ]
-        return ARGS.param_order + remaining_params
-    return [x for x in params_sorted_by_original_order]
+        field = dict(sorted_params)
+    return field
 
 
 def get_types():
@@ -551,7 +557,7 @@ def main():
     lookml_out = lkml.dump(parsed_lookml)
 
     with open(file_path, "w") as file:
-        file.write(lookml_out)
+        file.write(lookml_out + "\n")
 
     if ARGS.check_required_params:
         warnings = get_warning_line_numbers(warnings, lookml_out)
