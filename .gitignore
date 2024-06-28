@@ -2,6 +2,6 @@
 **.view.lkml
 !input.view.lkml
 !expected.view.lkml
-!example_input.view.lkml
+!example.view.lkml
 .pytest*
 **__pycache__
