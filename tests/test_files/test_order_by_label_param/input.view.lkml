@@ -1,10 +1,14 @@
 view: orders {
   sql_table_name: `my_project.dataset.orders` ;;
 
+  filter: a_filter_name {
+    type: number
+  }
+
   dimension: b_dimension_name {
     type: number
   }
-  
+
   dimension: c_dimension_name {
     type: number
   }
@@ -13,12 +17,8 @@ view: orders {
     type: number
     label: "a_dimension_name"
   }
- 
+
   measure: a_measure_name {
     type: average
-  }
-
-  filter: a_filter_name {
-    type: number
   }
 }

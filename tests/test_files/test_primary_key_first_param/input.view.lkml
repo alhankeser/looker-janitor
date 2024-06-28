@@ -5,13 +5,13 @@ view: orders {
     type: number
   }
 
+  dimension: a_dimension_name {
+    type: number
+  }
+
   dimension: b_dimension_name {
     type: number
     primary_key: yes
-  }
-
-  dimension: a_dimension_name {
-    type: number
   }
 
   measure: a_measure_name {
