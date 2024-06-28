@@ -34,9 +34,11 @@ jobs:
               with:
                 python-version: '3.12'
             - name: Create dedicated branch
+              id: branch
               run: |
-                  head=$(git rev-parse HEAD)
-                  git checkout -b tests/$head
+                  hash=$(git rev-parse HEAD)
+                  echo "hash=$hash" >> $GITHUB_OUTPUT 
+                  git checkout -b tests/$hash
               shell: bash
             - name: Install dependencies
               run: |
@@ -62,5 +64,5 @@ jobs:
               run: |
                 git add .
                 git commit -m "Replace input with output" || continue
-                git push
+                git push --set-upstream origin tests/${{ steps.branch.outputs.hash }}
         
