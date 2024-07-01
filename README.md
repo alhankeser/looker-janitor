@@ -1,19 +1,25 @@
 ## Looker Janitor
-Consistently clean-up your LookML.
+Clean your Looker LookML view files.
 
 ## Getting Started
 
+As a local script:
 ```shell
-python main.py example_input.view.lkml example_output.view.lkml
+python main.py example.view.lkml
 ```
 
-## Options
+As a GitHub action:
+```shell
+- name: Run Looker Janitor
+  uses: alhankeser/looker-janitor-action@v0
+```
 
-- `TYPE_ORDER`: list of field types, in the order that you would like them to appear in your lookml view file.
-- `PARAM_ORDER`: list of parameters, in the other that you would like them to apear in each field. Any remaining parameters in a field will be appended, in alphabetical order.
-- `REQUIRED_PARAMS`: parameters that are required for each field type. Warnings are returned as a dictionary, including line number for each number.
-- `OPTIONS`:
-  - `sort_fields`
-  - `sort_field_parameters`
-  - `check_required_params`
-  - `primary_key_first`
+## Testing
+
+Run the following command:
+```
+pytest
+```
+
+## Read More about how to use Looker Janitor here:
+[Looker Janitor: LookML View Cleaner](https://github.com/marketplace/actions/looker-janitor-lookml-view-cleaner)
