@@ -14,5 +14,12 @@ As a GitHub action:
   uses: alhankeser/looker-janitor-action@v0
 ```
 
+## Testing
+
+Run the following command:
+```
+pytest
+```
+
 ## Read More about how to use Looker Janitor here:
 [Looker Janitor: LookML View Cleaner](https://github.com/marketplace/actions/looker-janitor-lookml-view-cleaner)
