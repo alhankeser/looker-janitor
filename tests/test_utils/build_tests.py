@@ -29,7 +29,7 @@ def main():
               run: |
                 cp tests/test_files/{test_name}/input.view.lkml tests/test_files/{test_name}/output.view.lkml
             - name: Run {test_name}
-              uses: alhankeser/looker-janitor-action@latest
+              uses: alhankeser/looker-janitor-action@dev
               with:
                 files: |
                   tests/test_files/{test_name}/output.view.lkml"""
