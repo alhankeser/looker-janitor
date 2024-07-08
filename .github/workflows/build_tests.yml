@@ -37,6 +37,6 @@ jobs:
                 git push -f --tags || true
             - name: Push updated test files
               run: |
-                git add . || continue
+                git add .
                 git commit -m "Build Tests" || continue
-                git push || continue
+                git push
