@@ -22,3 +22,4 @@ view: orders {
     type: average
   }
 }
+#Change to make test fail

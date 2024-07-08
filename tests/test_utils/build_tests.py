@@ -42,19 +42,13 @@ def main():
                   {arg}"""
         action_tests += f"""
             - name: Compare output to expected
-              id: {test_name}
               shell: bash
               run: |
                 if diff -s "tests/test_files/{test_name}/output.view.lkml" "tests/test_files/{test_name}/expected.view.lkml"; then
-                  files_match=true
+                  echo "{test_name} Passed"
                 else
-                  files_match=false
-                fi
-                echo "result=$files_match" >> $GITHUB_OUTPUT
-            - name: Print Results
-              shell: bash
-              run: |
-                echo ${{{{ steps.{test_name}.outputs.result }}}}"""
+                  echo "::error:: {test_name} Failed"
+                fi"""
 
     generic_tests = textwrap.dedent(generic_tests)
     with open("tests/test_generic.py", "w") as generic_tests_file:
