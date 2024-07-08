@@ -10,6 +10,7 @@ jobs:
     build-tests:
         permissions:
           contents: write
+          actions: write
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -28,10 +29,12 @@ jobs:
             - name: Build tests
               run: |
                 python tests/test_utils/build_tests.py tests/generic_tests.json
-            - name: Commit Cleaned Files
-              shell: bash
+            - name: Set test tag
+              run: |
+                git tag -f test || true
+                git push -f --tags || true
+            - name: Push updated test files
               run: |
                 git add . || continue
                 git commit -m "Build Tests" || continue
-                git tag -f test || true
-                git push -f --tags || true
+                git push || continue

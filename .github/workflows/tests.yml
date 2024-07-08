@@ -1,7 +1,5 @@
 name: Python Tests
 on:
-    pull_request:
-      types:  [opened, synchronize]
     push:
       tags:
         - 'test*'
