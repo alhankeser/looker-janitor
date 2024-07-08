@@ -28,7 +28,7 @@ jobs:
               run: |
                 cp tests/test_files/test_type_order_param/input.view.lkml tests/test_files/test_type_order_param/output.view.lkml
             - name: Run test_type_order_param
-              uses: alhankeser/looker-janitor-action@latest
+              uses: alhankeser/looker-janitor-action@dev
               with:
                 files: |
                   tests/test_files/test_type_order_param/output.view.lkml
@@ -49,7 +49,7 @@ jobs:
               run: |
                 cp tests/test_files/test_param_order/input.view.lkml tests/test_files/test_param_order/output.view.lkml
             - name: Run test_param_order
-              uses: alhankeser/looker-janitor-action@latest
+              uses: alhankeser/looker-janitor-action@dev
               with:
                 files: |
                   tests/test_files/test_param_order/output.view.lkml
@@ -67,7 +67,7 @@ jobs:
               run: |
                 cp tests/test_files/test_param_order_param/input.view.lkml tests/test_files/test_param_order_param/output.view.lkml
             - name: Run test_param_order_param
-              uses: alhankeser/looker-janitor-action@latest
+              uses: alhankeser/looker-janitor-action@dev
               with:
                 files: |
                   tests/test_files/test_param_order_param/output.view.lkml
@@ -88,7 +88,7 @@ jobs:
               run: |
                 cp tests/test_files/test_primary_key_first/input.view.lkml tests/test_files/test_primary_key_first/output.view.lkml
             - name: Run test_primary_key_first
-              uses: alhankeser/looker-janitor-action@latest
+              uses: alhankeser/looker-janitor-action@dev
               with:
                 files: |
                   tests/test_files/test_primary_key_first/output.view.lkml
@@ -106,7 +106,7 @@ jobs:
               run: |
                 cp tests/test_files/test_primary_key_first_param/input.view.lkml tests/test_files/test_primary_key_first_param/output.view.lkml
             - name: Run test_primary_key_first_param
-              uses: alhankeser/looker-janitor-action@latest
+              uses: alhankeser/looker-janitor-action@dev
               with:
                 files: |
                   tests/test_files/test_primary_key_first_param/output.view.lkml
@@ -126,7 +126,7 @@ jobs:
               run: |
                 cp tests/test_files/test_order_fields/input.view.lkml tests/test_files/test_order_fields/output.view.lkml
             - name: Run test_order_fields
-              uses: alhankeser/looker-janitor-action@latest
+              uses: alhankeser/looker-janitor-action@dev
               with:
                 files: |
                   tests/test_files/test_order_fields/output.view.lkml
@@ -144,7 +144,7 @@ jobs:
               run: |
                 cp tests/test_files/test_order_fields_param/input.view.lkml tests/test_files/test_order_fields_param/output.view.lkml
             - name: Run test_order_fields_param
-              uses: alhankeser/looker-janitor-action@latest
+              uses: alhankeser/looker-janitor-action@dev
               with:
                 files: |
                   tests/test_files/test_order_fields_param/output.view.lkml
@@ -164,7 +164,7 @@ jobs:
               run: |
                 cp tests/test_files/test_order_by_label/input.view.lkml tests/test_files/test_order_by_label/output.view.lkml
             - name: Run test_order_by_label
-              uses: alhankeser/looker-janitor-action@latest
+              uses: alhankeser/looker-janitor-action@dev
               with:
                 files: |
                   tests/test_files/test_order_by_label/output.view.lkml
@@ -182,7 +182,7 @@ jobs:
               run: |
                 cp tests/test_files/test_order_by_label_param/input.view.lkml tests/test_files/test_order_by_label_param/output.view.lkml
             - name: Run test_order_by_label_param
-              uses: alhankeser/looker-janitor-action@latest
+              uses: alhankeser/looker-janitor-action@dev
               with:
                 files: |
                   tests/test_files/test_order_by_label_param/output.view.lkml
@@ -202,7 +202,7 @@ jobs:
               run: |
                 cp tests/test_files/test_localization_file_path_param/input.view.lkml tests/test_files/test_localization_file_path_param/output.view.lkml
             - name: Run test_localization_file_path_param
-              uses: alhankeser/looker-janitor-action@latest
+              uses: alhankeser/looker-janitor-action@dev
               with:
                 files: |
                   tests/test_files/test_localization_file_path_param/output.view.lkml
@@ -222,7 +222,7 @@ jobs:
               run: |
                 cp tests/test_files/test_order_field_parameters_param/input.view.lkml tests/test_files/test_order_field_parameters_param/output.view.lkml
             - name: Run test_order_field_parameters_param
-              uses: alhankeser/looker-janitor-action@latest
+              uses: alhankeser/looker-janitor-action@dev
               with:
                 files: |
                   tests/test_files/test_order_field_parameters_param/output.view.lkml
