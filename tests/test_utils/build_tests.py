@@ -45,9 +45,9 @@ def main():
               shell: bash
               run: |
                 if diff -s "tests/test_files/{test_name}/output.view.lkml" "tests/test_files/{test_name}/expected.view.lkml"; then
-                  echo "{test_name} Passed"
+                  echo "{test_name} PASSED"
                 else
-                  echo "::error:: {test_name} Failed"
+                  echo "::error:: {test_name} FAILED"
                   exit 1
                 fi"""
 

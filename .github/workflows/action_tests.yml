@@ -41,9 +41,10 @@ jobs:
               shell: bash
               run: |
                 if diff -s "tests/test_files/test_type_order_param/output.view.lkml" "tests/test_files/test_type_order_param/expected.view.lkml"; then
-                  echo "test_type_order_param Passed"
+                  echo "test_type_order_param PASSED"
                 else
-                  echo "::error:: test_type_order_param Failed"
+                  echo "::error:: test_type_order_param FAILED"
+                  exit 1
                 fi
             - name: Setup test_param_order
               shell: bash
@@ -58,9 +59,10 @@ jobs:
               shell: bash
               run: |
                 if diff -s "tests/test_files/test_param_order/output.view.lkml" "tests/test_files/test_param_order/expected.view.lkml"; then
-                  echo "test_param_order Passed"
+                  echo "test_param_order PASSED"
                 else
-                  echo "::error:: test_param_order Failed"
+                  echo "::error:: test_param_order FAILED"
+                  exit 1
                 fi
             - name: Setup test_param_order_param
               shell: bash
@@ -78,9 +80,10 @@ jobs:
               shell: bash
               run: |
                 if diff -s "tests/test_files/test_param_order_param/output.view.lkml" "tests/test_files/test_param_order_param/expected.view.lkml"; then
-                  echo "test_param_order_param Passed"
+                  echo "test_param_order_param PASSED"
                 else
-                  echo "::error:: test_param_order_param Failed"
+                  echo "::error:: test_param_order_param FAILED"
+                  exit 1
                 fi
             - name: Setup test_primary_key_first
               shell: bash
@@ -95,9 +98,10 @@ jobs:
               shell: bash
               run: |
                 if diff -s "tests/test_files/test_primary_key_first/output.view.lkml" "tests/test_files/test_primary_key_first/expected.view.lkml"; then
-                  echo "test_primary_key_first Passed"
+                  echo "test_primary_key_first PASSED"
                 else
-                  echo "::error:: test_primary_key_first Failed"
+                  echo "::error:: test_primary_key_first FAILED"
+                  exit 1
                 fi
             - name: Setup test_primary_key_first_param
               shell: bash
@@ -114,9 +118,10 @@ jobs:
               shell: bash
               run: |
                 if diff -s "tests/test_files/test_primary_key_first_param/output.view.lkml" "tests/test_files/test_primary_key_first_param/expected.view.lkml"; then
-                  echo "test_primary_key_first_param Passed"
+                  echo "test_primary_key_first_param PASSED"
                 else
-                  echo "::error:: test_primary_key_first_param Failed"
+                  echo "::error:: test_primary_key_first_param FAILED"
+                  exit 1
                 fi
             - name: Setup test_order_fields
               shell: bash
@@ -131,9 +136,10 @@ jobs:
               shell: bash
               run: |
                 if diff -s "tests/test_files/test_order_fields/output.view.lkml" "tests/test_files/test_order_fields/expected.view.lkml"; then
-                  echo "test_order_fields Passed"
+                  echo "test_order_fields PASSED"
                 else
-                  echo "::error:: test_order_fields Failed"
+                  echo "::error:: test_order_fields FAILED"
+                  exit 1
                 fi
             - name: Setup test_order_fields_param
               shell: bash
@@ -150,9 +156,10 @@ jobs:
               shell: bash
               run: |
                 if diff -s "tests/test_files/test_order_fields_param/output.view.lkml" "tests/test_files/test_order_fields_param/expected.view.lkml"; then
-                  echo "test_order_fields_param Passed"
+                  echo "test_order_fields_param PASSED"
                 else
-                  echo "::error:: test_order_fields_param Failed"
+                  echo "::error:: test_order_fields_param FAILED"
+                  exit 1
                 fi
             - name: Setup test_order_by_label
               shell: bash
@@ -167,9 +174,10 @@ jobs:
               shell: bash
               run: |
                 if diff -s "tests/test_files/test_order_by_label/output.view.lkml" "tests/test_files/test_order_by_label/expected.view.lkml"; then
-                  echo "test_order_by_label Passed"
+                  echo "test_order_by_label PASSED"
                 else
-                  echo "::error:: test_order_by_label Failed"
+                  echo "::error:: test_order_by_label FAILED"
+                  exit 1
                 fi
             - name: Setup test_order_by_label_param
               shell: bash
@@ -186,9 +194,10 @@ jobs:
               shell: bash
               run: |
                 if diff -s "tests/test_files/test_order_by_label_param/output.view.lkml" "tests/test_files/test_order_by_label_param/expected.view.lkml"; then
-                  echo "test_order_by_label_param Passed"
+                  echo "test_order_by_label_param PASSED"
                 else
-                  echo "::error:: test_order_by_label_param Failed"
+                  echo "::error:: test_order_by_label_param FAILED"
+                  exit 1
                 fi
             - name: Setup test_localization_file_path_param
               shell: bash
@@ -205,9 +214,10 @@ jobs:
               shell: bash
               run: |
                 if diff -s "tests/test_files/test_localization_file_path_param/output.view.lkml" "tests/test_files/test_localization_file_path_param/expected.view.lkml"; then
-                  echo "test_localization_file_path_param Passed"
+                  echo "test_localization_file_path_param PASSED"
                 else
-                  echo "::error:: test_localization_file_path_param Failed"
+                  echo "::error:: test_localization_file_path_param FAILED"
+                  exit 1
                 fi
             - name: Setup test_order_field_parameters_param
               shell: bash
@@ -224,7 +234,8 @@ jobs:
               shell: bash
               run: |
                 if diff -s "tests/test_files/test_order_field_parameters_param/output.view.lkml" "tests/test_files/test_order_field_parameters_param/expected.view.lkml"; then
-                  echo "test_order_field_parameters_param Passed"
+                  echo "test_order_field_parameters_param PASSED"
                 else
-                  echo "::error:: test_order_field_parameters_param Failed"
+                  echo "::error:: test_order_field_parameters_param FAILED"
+                  exit 1
                 fi
