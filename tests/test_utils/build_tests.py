@@ -48,6 +48,7 @@ def main():
                   echo "{test_name} Passed"
                 else
                   echo "::error:: {test_name} Failed"
+                  exit 1
                 fi"""
 
     generic_tests = textwrap.dedent(generic_tests)
