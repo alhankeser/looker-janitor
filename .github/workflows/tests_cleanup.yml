@@ -1,0 +1,23 @@
+name: Clean-up Tests
+on:
+    push:
+      tags:
+        - 'test*'
+
+jobs:
+    run-python-tests:
+        permissions:
+          contents: write
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Configure Git user
+              run : |
+                git config user.name github-actions
+                git config user.email github-actions@github.com
+            - name: Remove test tag
+              run: |
+                git tag -d test || continue
+                git push -f --tags || true
+
+                

@@ -1,0 +1,47 @@
+name: Build Tests
+on:
+    pull_request:
+      types:  [opened, synchronize]
+    push:
+      branches:
+        - main
+      tags-ignore:
+        - 'test*'
+
+jobs:
+    build-tests:
+        permissions:
+          contents: write
+          actions: write
+          checks: write
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                ref: ${{ github.event.pull_request.head.ref }}
+                token: ${{ secrets.WORKFLOW_PAT }}
+            - name: Configure Git user
+              run : |
+                git config user.name github-actions
+                git config user.email github-actions@github.com
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                python-version: '3.12'
+            - name: Install dependencies
+              run: |
+                python -m pip install --upgrade pip
+                pip install -r requirements.txt
+            - name: Build tests
+              run: |
+                python tests/test_utils/build_tests.py tests/generic_tests.json
+            - name: Set test tag
+              run: |
+                git tag -f test || true
+                git push -f --tags || true
+            - name: Push updated test files
+              run: |
+                git pull || continue
+                git add . || continue
+                git commit -m "Build Tests" || continue
+                git push -f
