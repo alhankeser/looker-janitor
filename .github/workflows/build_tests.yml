@@ -8,12 +8,16 @@ on:
 
 jobs:
     build-tests:
-        permissions: write-all
+        permissions:
+          contents: write
+          actions: write
+          checks: write
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
               with:
                 ref: ${{ github.event.pull_request.head.ref }}
+                token: ${{ secrets.WORKFLOW_PAT }}
             - name: Configure Git user
               run : |
                 git config user.name github-actions
