@@ -1,0 +1,51 @@
+name: Tests
+on:
+    pull_request:
+      types:  [opened, synchronize]
+    push:
+      branches:
+        - main
+
+jobs:
+    run-tests:
+        permissions:
+          contents: write
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Configure Git user
+              run : |
+                git config user.name github-actions
+                git config user.email github-actions@github.com
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                python-version: '3.12'
+            - name: Install dependencies
+              run: |
+                python -m pip install --upgrade pip
+                pip install -r requirements.txt
+            # - name: setup_test_order_field_types
+            #   shell: bash
+            #   run: |
+            #     cp looker-janitor/tests/test_files/test_order_field_types/input.view.lkml looker-janitor/tests/test_files/test_order_field_types/output.view.lkml
+            # - name: test_order_field_types
+            #   id: test_order_field_types
+            #   uses: alhankeser/looker-janitor-action@dev
+            #   with:
+            #     files: |
+            #       looker-janitor/tests/test_files/test_order_field_types/output.view.lkml
+            # - name: check_test_order_field_types
+            #   id: check_test_order_field_types
+            #   shell: bash
+            #   run: |
+            #     if diff -s "looker-janitor/tests/test_files/test_order_field_types/output.view.lkml" "looker-janitor/tests/test_files/test_order_field_types/expected.view.lkml"; then
+            #       files_match=true
+            #     else
+            #       files_match=false
+            #     fi
+            #     echo "result=$files_match" >> $GITHUB_OUTPUT
+            # - name: print results
+            #   shell: bash
+            #   run: |
+            #     echo ${{ steps.check_test_order_field_types.outputs.result }}
