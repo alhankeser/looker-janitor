@@ -8,11 +8,7 @@ on:
 
 jobs:
     build-tests:
-        permissions:
-          contents: write
-          actions: write
-          checks: write
-          workflows: write
+        permissions: write-all
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
