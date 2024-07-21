@@ -70,4 +70,3 @@ view: orders {
     value_format: "$#,##0.00"
   }
 }
-  

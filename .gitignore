@@ -3,6 +3,8 @@
 !input.view.lkml
 !expected.view.lkml
 !output.view.lkml
-!example.view.lkml
+!example_input.view.lkml
+!example_output.view.lkml
 .pytest*
 **__pycache__
+**.vscode
