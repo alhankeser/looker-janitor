@@ -2,6 +2,7 @@ import regex as re
 import argparse
 import json
 import lkml
+from shlex import quote
 
 DEFAULT_TYPE_ORDER = [
     "filter",
@@ -345,7 +346,7 @@ def main():
             file.write(lookml_out + "\n")
 
     if ARGS.check_required_params:
-        print(all_warnings, flush=True)
+        print(quote(all_warnings))
 
 
 if __name__ == "__main__":
