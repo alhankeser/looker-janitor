@@ -347,10 +347,7 @@ def main():
 
     if ARGS.check_required_params:
         print(all_warnings)
-        with open("looker-janitor-output.txt", "w+") as output_file:
-            output_file.write(all_warnings)
-        path = subprocess.run(["pwd"], capture_output=True)
-        print(path)
+
 
 if __name__ == "__main__":
     ARGS = parse_args()
