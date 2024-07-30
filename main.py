@@ -306,7 +306,7 @@ def get_warning_line_numbers(warnings, lookml_out):
 def format_warnings(warnings, file_path):
     formatted_warnings = ""
     for warning in warnings:
-        formatted_warnings += "Looker Janitor:{file_path}:{line_number}: {field_type} '{field_name}' missing {missing}\n".format(
+        formatted_warnings += "{file_path}:{line_number}: [looker-janitor] {field_type} '{field_name}' missing {missing}\n".format(
             file_path=file_path,
             line_number=warning["line_number"],
             missing="".join(warning["parameters"]),
