@@ -2,7 +2,6 @@ import regex as re
 import argparse
 import json
 import lkml
-from shlex import quote
 
 DEFAULT_TYPE_ORDER = [
     "filter",
@@ -346,8 +345,8 @@ def main():
             file.write(lookml_out + "\n")
 
     if ARGS.check_required_params:
-        print(quote(all_warnings))
-        with open("./output.txt", "w+") as output_file:
+        print(all_warnings)
+        with open("looker-janitor/output.txt", "w+") as output_file:
             output_file.write(all_warnings)
 
 
