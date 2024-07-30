@@ -2,6 +2,7 @@ import regex as re
 import argparse
 import json
 import lkml
+import subprocess
 
 DEFAULT_TYPE_ORDER = [
     "filter",
@@ -348,7 +349,8 @@ def main():
         print(all_warnings)
         with open("looker-janitor-output.txt", "w+") as output_file:
             output_file.write(all_warnings)
-
+        path = subprocess.run(["pwd"], capture_output=True)
+        print(path)
 
 if __name__ == "__main__":
     ARGS = parse_args()
