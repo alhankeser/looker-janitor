@@ -347,6 +347,8 @@ def main():
 
     if ARGS.check_required_params:
         print(quote(all_warnings))
+        with open("./output.txt", "w+") as output_file:
+            output_file.write(all_warnings)
 
 
 if __name__ == "__main__":
