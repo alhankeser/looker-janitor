@@ -34,10 +34,10 @@ def get_fields(fields):
         localization_data = get_localization_data()
         for i, field in enumerate(fields):
             fields[i] = get_params(field)
-            has_label = "label" in fields[i].keys()
+            has_label = "label" in fields[i]
             if (
                 ARGS.primary_key_first
-                and "primary_key" in field.keys()
+                and "primary_key" in field
                 and field["primary_key"].lower() == "yes"
             ):
                 fields[i]["sort_key"] = "-1"
@@ -47,7 +47,7 @@ def get_fields(fields):
                     if ARGS.order_fields_by_label and has_label
                     else fields[i]["name"]
                 )
-            if fields[i]["sort_key"] in localization_data.keys():
+            if fields[i]["sort_key"] in localization_data:
                 fields[i]["sort_key"] = localization_data[fields[i]["sort_key"]]
         fields = [
             {k: v for k, v in field.items() if k != "sort_key"}
@@ -59,7 +59,7 @@ def get_fields(fields):
 def get_params(field):
     if ARGS.order_field_parameters:
         sort_keys = {}
-        original_params = list(field.keys())
+        original_params = list(field)
         custom_order_count = len(ARGS.param_order)
         for param_name in original_params:
             sort_keys[param_name] = (
@@ -97,7 +97,7 @@ def get_field_sort_key(field, localization_data):
     sort_key = field["field_name"]
     if ARGS.order_fields_by_label and not field["label"] == "":
         label = re.search(rf"[\"|\']([\w|\W]+)[\"|\']", field["label"]).group(1)
-        if label in localization_data.keys():
+        if label in localization_data:
             label = localization_data[label]
         sort_key = label
     return sort_key
@@ -258,28 +258,24 @@ def parse_args():
 
 def get_field_types(view):
     if ARGS.order_types:
-        ordered_types = [x + "s" for x in ARGS.type_order if x + "s" in view.keys()]
+        ordered_types = [x + "s" for x in ARGS.type_order if x + "s" in view]
         remaining_types = [
-            x
-            for x in view.keys()
-            if x[:-1] in DEFAULT_TYPE_ORDER and x not in ordered_types
+            x for x in view if x[:-1] in DEFAULT_TYPE_ORDER and x not in ordered_types
         ]
         return ordered_types + remaining_types
-    return [x for x in view.keys() if x[:-1] in DEFAULT_TYPE_ORDER]
+    return [x for x in view if x[:-1] in DEFAULT_TYPE_ORDER]
 
 
 def get_non_field_types(view):
-    return [x for x in view.keys() if x[:-1] not in DEFAULT_TYPE_ORDER]
+    return [x for x in view if x[:-1] not in DEFAULT_TYPE_ORDER]
 
 
 def check_required_params(required, view, warnings):
     for field_type, required_params in required.items():
-        if field_type in view.keys():
+        if field_type in view:
             for field in view[field_type]:
-                if len(field.keys()) < len(set(list(field.keys()) + required_params)):
-                    missing_params = [
-                        x for x in required_params if x not in field.keys()
-                    ]
+                if len(field) < len(set(list(field) + required_params)):
+                    missing_params = [x for x in required_params if x not in field]
                     warnings.append(
                         {
                             "view_name": view["name"],
