@@ -2,7 +2,6 @@ import regex as re
 import argparse
 import json
 import lkml
-import subprocess
 
 DEFAULT_TYPE_ORDER = [
     "filter",
