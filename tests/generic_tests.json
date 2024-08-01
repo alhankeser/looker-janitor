@@ -1,0 +1,13 @@
+{
+    "test_type_order_param": ["--type_order","measure","dimension"],
+    "test_param_order": [],
+    "test_param_order_param": ["--param_order","sql","type"],
+    "test_primary_key_first": [],
+    "test_primary_key_first_param": ["--primary_key_first","false"],
+    "test_order_fields": [],
+    "test_order_fields_param": ["--order_fields","false"],
+    "test_order_by_label": [],
+    "test_order_by_label_param": ["--order_fields_by_label","false"],
+    "test_localization_file_path_param": ["--localization_file_path","tests/test_files/test_localization_file_path_param/en.strings.json"],
+    "test_order_field_parameters_param": ["--order_field_parameters","false"]
+}

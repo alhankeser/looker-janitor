@@ -10,9 +10,9 @@ Clean your Looker LookML view files:
 
 ## Getting Started
 
-As a local script:
+As a local script with default settings:
 ```shell
-python main.py example.view.lkml
+python main.py samples/example_input.view.lkml
 ```
 
 As a GitHub action:
@@ -28,7 +28,7 @@ Run the following command:
 pytest
 ```
 
-## Read More about how to use Looker Janitor here:
+## Using Looker Janitor as a GitHub Action:
 [Looker Janitor: LookML View Cleaner](https://github.com/marketplace/actions/looker-janitor-lookml-view-cleaner)
 
 ## More examples
