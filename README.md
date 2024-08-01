@@ -1,4 +1,4 @@
-[![Action Tests](https://github.com/alhankeser/looker-janitor/actions/workflows/action_tests.yml/badge.svg)](https://github.com/alhankeser/looker-janitor/actions/workflows/action_tests.yml)[![Python Tests](https://github.com/alhankeser/looker-janitor/actions/workflows/tests.yml/badge.svg)](https://github.com/alhankeser/looker-janitor/actions/workflows/tests.yml)
+[![Action Tests](https://github.com/alhankeser/looker-janitor/actions/workflows/action_tests.yml/badge.svg)](https://github.com/alhankeser/looker-janitor/actions/workflows/action_tests.yml) [![Python Tests](https://github.com/alhankeser/looker-janitor/actions/workflows/tests.yml/badge.svg)](https://github.com/alhankeser/looker-janitor/actions/workflows/tests.yml)
 
 ## Looker Janitor
 Clean your Looker LookML view files:
